@@ -1,0 +1,34 @@
+{
+    "name": "acdh-oeaw/arche_core_gui_api",
+    "description": "Drupal API module to ACDH ARCHE repository",
+    "type": "drupal-module",
+    "homepage": "https://github.com/acdh-oeaw/arche_core_gui_api",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Norbert Czirjak",
+            "email": "norbert.czirjak@oeaw.ac.at"
+        }
+    ],
+    "require": {
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9",
+        "drupal/core-dev": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Drupal\\arche_core_gui_api\\": "src/",
+            "Drupal\\arche_core_gui_api\\Object\\": "src/Object",
+            "Drupal\\arche_core_gui_api\\Helper\\": "src/Helper",
+            "Drupal\\arche_core_gui_api\\Controller\\": "src/Controller",
+            "Drupal\\arche_core_gui_api\\Model\\": "src/Model",
+            "Drupal\\arche_core_gui_api\\Traits\\": "src/Traits"
+        }
+    },
+     "extra": {
+    },
+    "config": {
+        "allow-plugins": true
+    }
+}

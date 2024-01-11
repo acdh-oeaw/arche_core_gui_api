@@ -1,0 +1,9 @@
+<?php
+
+function arche_core_gui_api_page_attachments(array &$page) {
+    
+}
+
+
+
+
