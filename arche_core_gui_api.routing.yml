@@ -1,16 +1,17 @@
 arche_api_topcollections:
-  path: '/api/topcollections/{count}'
+  path: '/api/topcollections/{count}/{lang}'
   defaults:
     _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::topCollections'
   requirements:
     count: '^[^\?]*$'
+    lang: '^[^\?]*$'
     _permission: 'access content'
     _access: 'TRUE'
 
 arche_metadata:
   path: '/metadata/{identifier}'
   defaults:
-    _controller: '\Drupal\arche_core_gui\Controller\ApiController::metadata'
+    _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::metadata'
   requirements:
     identifier: '^[^\?]*$'
     _permission: 'access content'
