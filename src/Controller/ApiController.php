@@ -33,12 +33,12 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         
     }
     
-    public function metadata(int $id) {
+    public function metadata(string $identifier) {
         
         //METADATA API
         
         //CACHE THE METADATA
-        echo $id;
+        echo $identifier;
         return [];
     }
     
