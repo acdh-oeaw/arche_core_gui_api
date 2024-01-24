@@ -17,4 +17,24 @@ arche_api__metadata:
     _permission: 'access content'
     _access: 'TRUE'      
 
+arche_core_api_expert:    
+  path: '/api/expert/{id}/{lang}'
+  defaults:
+    _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::getExpertData'
+  requirements:
+    id: '^[^\?]*$'
+    lang: '^[^\?]*$'
+    _permission: 'access content'
+    _access: 'TRUE'     
+    
+arche_core_api_topcollections:    
+  path: '/api/tp/{count}/{lang}'
+  defaults:
+    _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::getTopCollections'
+  requirements:
+    id: '^[^\?]*$'
+    lang: '^[^\?]*$'
+    _permission: 'access content'
+    _access: 'TRUE'         
+    
     

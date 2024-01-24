@@ -6,13 +6,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use EasyRdf\Graph;
 use EasyRdf\Literal;
-
 use acdhOeaw\arche\lib\RepoDb;
 use acdhOeaw\arche\lib\SearchConfig;
 use acdhOeaw\arche\lib\SearchTerm;
 
 class MetadataController extends \Drupal\arche_core_gui_api\Controller\ArcheBaseController {
-    
+
     private $apiHelper;
 
     public function __construct() {
@@ -20,79 +19,75 @@ class MetadataController extends \Drupal\arche_core_gui_api\Controller\ArcheBase
     }
 
     public function getTopCollections_(int $count, string $lang = "en"): JsonResponse {
-  
+
         $repo = RepoDb::factory(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config-gui.yaml');
-       
-$schema = $repo->getSchema();
-$scfg = new \acdhOeaw\arche\lib\SearchConfig();
-$scfg->orderBy = ['^' . $schema->modificationDate];
-$scfg->limit = 10;
+
+        $schema = $repo->getSchema();
+        $scfg = new \acdhOeaw\arche\lib\SearchConfig();
+        $scfg->orderBy = ['^' . $schema->modificationDate];
+        $scfg->limit = 10;
 //<-- adjust according to what you need to display
 //    see https://acdh-oeaw.github.io/arche-docs/aux/metadata_api_for_programmers.html
-$scfg->metadataMode = 'resource';
-$scfg->resourceProperties = [
-    $schema->title,
-    $schema->modificationDate,
-];
-$scfg->relativesProperties = [];
+        $scfg->metadataMode = 'resource';
+        $scfg->resourceProperties = [
+            $schema->title,
+            $schema->modificationDate,
+        ];
+        $scfg->relativesProperties = [];
 //-->
-
 // the fastest way but with more postprocessing required you get a PDO statement with each row being a metadata triple
 // and you need to map it to resource objects, see code samples e.g. in https://redmine.acdh.oeaw.ac.at/issues/21475
-$pdoStmt = $repo->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(\zozlak\RdfConstants::RDF_TYPE, $schema->classes->topCollection)], $scfg);
+        $pdoStmt = $repo->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(\zozlak\RdfConstants::RDF_TYPE, $schema->classes->topCollection)], $scfg);
 // or
 // here you get a collection of RepoResourceDb objects and from each you can get its EasyRdf metadata object and read
 // data from it
 //$resources = $repo->getResourcesBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(\zozlak\RdfConstants::RDF_TYPE, $schema->classes->topCollection)], $scfg);
 
 
-while ($triple = $pdoStmt->fetchObject()) {
-         
-        $id = (string)$triple->id;
-        $property = $triple->property;
-        
+        while ($triple = $pdoStmt->fetchObject()) {
+
+            $id = (string) $triple->id;
+            $property = $triple->property;
+
+            echo "<pre>";
+            var_dump($triple);
+            echo "</pre>";
+
+            if ($property === "search://match") {
+                echo $id;
+                echo "<br>";
+            }
+
+            $context = $id === $resId ? $contextResource : $contextRelatives;
+            $shortProperty = $context[$triple->property] ?? false;
+            $resources[$id] ??= (object) ['id' => $id];
+            $tid = null;
+            if ($triple->type === 'REL') {
+                $tid = $triple->value;
+                $resources[$tid] ??= (object) ['id' => $tid];
+            }
+
+            if ($triple->type !== 'REL') {
+                if ($shortProperty) {
+                    // ordinary property existing in the context
+                    $resources[$id]->{$shortProperty}[] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
+                } elseif ($id === $resId) {
+                    // expert property - out of context but belongs to the main resource 
+                    $resource->expert[$property][] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
+                }
+            } elseif ($shortProperty) {
+                $resources[$id]->{$shortProperty}[$tid] = $resources[$tid];
+            } elseif ($id === $resId) {
+                $resource->expert[$property][$tid] = $resources[$tid];
+            }
+        }
         echo "<pre>";
-        var_dump($triple);
+        var_dump($resources);
         echo "</pre>";
 
-     
-        if($property === "search://match") {
-            echo $id;
-            echo "<br>";
-        }
-        
-        $context = $id === $resId ? $contextResource : $contextRelatives;
-        $shortProperty = $context[$triple->property] ?? false;
-        $resources[$id] ??= (object) ['id' => $id];
-        $tid = null;
-        if ($triple->type === 'REL') {
-            $tid = $triple->value;
-            $resources[$tid] ??= (object) ['id' => $tid];
-        }
+        die();
 
-        if ($triple->type !== 'REL') {
-            if ($shortProperty) {
-                // ordinary property existing in the context
-                $resources[$id]->{$shortProperty}[] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
-            } elseif ($id === $resId) {
-                // expert property - out of context but belongs to the main resource 
-                $resource->expert[$property][] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
-            }
-        } elseif ($shortProperty) {
-            $resources[$id]->{$shortProperty}[$tid] = $resources[$tid];
-        } elseif ($id === $resId) {
-            $resource->expert[$property][$tid] = $resources[$tid];
-        }
-}
-echo "<pre>";
-var_dump($resources);
-echo "</pre>";
-
-die();
-
-die();
-        
-       
+        die();
     }
 
     /**
@@ -153,5 +148,39 @@ die();
             }
         }
         return new JsonResponse($results);
+    }
+
+    public function getBreadcrumb(string $id) {
+        $schema = $this->repoDb->getSchema();
+        $context = [
+            $schema->label => 'title',
+            $schema->parent => 'parent',
+        ];
+
+        $resId = 417151;
+        $res = new \acdhOeaw\arche\lib\RepoResourceDb($resId, $this->repoDb);
+        $pdoStmt = $res->getMetadataStatement(
+                '0_99_0_0',
+                $schema->parent,
+                array_keys($context),
+                array_keys($context)
+        );
+        $resources = [];
+        while ($triple = $pdoStmt->fetchObject()) {
+            $id = (string) $triple->id;
+            if (!isset($context[$triple->property])) {
+                continue;
+            }
+            $property = $context[$triple->property];
+            $resources[$id] ??= (object) ['id' => $id];
+            if ($triple->type === 'REL') {
+                $tid = $triple->value;
+                $resources[$tid] ??= (object) ['id' => $tid];
+                $resources[$id]->$property[] = $resources[$tid];
+            } else {
+                $resources[$id]->$property[] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
+            }
+        }
+        print_r($resources[(string) $resId]);
     }
 }
