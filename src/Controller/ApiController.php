@@ -36,20 +36,7 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
     }
 
     public function getExpertData(string $id, string $lang = "en") {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         ##############################################################
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
@@ -60,45 +47,40 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $result = [];
         //try {
 
-            $res = new \acdhOeaw\arche\lib\RepoResourceDb($id, $this->repoDb);
-            
-            $contextRelatives = [
-                'https://vocabs.acdh.oeaw.ac.at/schema#hasTitle' => 'title',
-                'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' => 'class'
-            ];
+        $res = new \acdhOeaw\arche\lib\RepoResourceDb($id, $this->repoDb);
+        $schema = $this->repoDb->getSchema();
+        $contextResource = [
+            $schema->label => 'title',
+            $schema->parent => 'parent',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasAuthor' => 'author',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasCurator' => 'curator',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasLicense' => 'license',
+            'https://vocabs.acdh.oeaw.ac.at/schema#binarySize' => 'binarySize',
+            \zozlak\RdfConstants::RDF_TYPE => 'class',
+        ];
+        $contextRelatives = [
+            $schema->label => 'title',
+            \zozlak\RdfConstants::RDF_TYPE => 'class',
+            $schema->parent => 'parent',
+        ];
 
-            $pdoStmt = $res->getMetadataStatement(
-                    '0_0_1_0',
-                    '',
-                    $contextRelatives,
-                    $contextRelatives
-            );
-            echo "<pre>";
-            var_dump($res);
-            echo "</pre>";
-
-            die();
-             while ($triple = $pdoStmt->fetchObject()) {
-              
-                 echo "<pre>";
-                 var_dump($triple);
-                 echo "</pre>";
-
-                
-             }
- die();
-            //$result = $this->helper->extractDataFromCoreApiWithId($pdoStmt, $id);
-       // } catch (\Exception $ex) {
-        //    return new JsonResponse(array("Error during data processing: " . $ex->getMessage()), 404, ['Content-Type' => 'application/json']);
-        //x}
-
-        if (count($result) == 0) {
+        $pdoStmt = $res->getMetadataStatement(
+                '0_99_1_0',
+                $schema->parent,
+                [],
+                array_keys($contextRelatives)
+        );
+        $result = [];
+        
+        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
+        $result = $helper->extractExpertView($pdoStmt, $id, $contextRelatives, "en");
+       
+        if (count((array)$result) == 0) {
             return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
 
         return new JsonResponse(array("data" => $result), 200, ['Content-Type' => 'application/json']);
-        
-        
+
         //$data = $this->helper->fetchApiEndpoint('https://arche-dev.acdh-dev.oeaw.ac.at/browser/api/core/expert/' . $identifier . '/en');
         echo "expert data";
         return [];
@@ -123,12 +105,11 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
 
         while ($triple = $pdoStmt->fetchObject()) {
             $id = (string) $triple->id;
-            
+
             echo "<pre>";
             var_dump($triple);
             echo "</pre>";
 
-           
             if (!isset($context[$triple->property])) {
                 continue;
             }
