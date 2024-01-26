@@ -5,7 +5,7 @@ namespace Drupal\arche_core_gui_api\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Component\Utility\Xss;
-use zozlak\RdfConstants as RC;
+
 
 class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseController {
 
@@ -34,59 +34,21 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         echo $identifier;
         return [];
     }
-
-    public function getExpertData(string $id, string $lang = "en") {
-
-        ##############################################################
-        $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
-
-        if (empty($id)) {
-            return new JsonResponse(array("Please provide an id"), 404, ['Content-Type' => 'application/json']);
-        }
-
-        $result = [];
-        //try {
-
-        $res = new \acdhOeaw\arche\lib\RepoResourceDb($id, $this->repoDb);
-        $schema = $this->repoDb->getSchema();
-        $contextResource = [
-            $schema->label => 'title',
-            $schema->parent => 'parent',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasAuthor' => 'author',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasCurator' => 'curator',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasLicense' => 'license',
-            'https://vocabs.acdh.oeaw.ac.at/schema#binarySize' => 'binarySize',
-            \zozlak\RdfConstants::RDF_TYPE => 'class',
-        ];
-        $contextRelatives = [
-            $schema->label => 'title',
-            \zozlak\RdfConstants::RDF_TYPE => 'class',
-            $schema->parent => 'parent',
-        ];
-
-        $pdoStmt = $res->getMetadataStatement(
-                '0_99_1_0',
-                $schema->parent,
-                [],
-                array_keys($contextRelatives)
-        );
-        $result = [];
-        
-        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractExpertView($pdoStmt, $id, $contextRelatives, "en");
-       
-        if (count((array)$result) == 0) {
-            return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
-        }
-
-        return new JsonResponse(array("data" => $result), 200, ['Content-Type' => 'application/json']);
-
-        //$data = $this->helper->fetchApiEndpoint('https://arche-dev.acdh-dev.oeaw.ac.at/browser/api/core/expert/' . $identifier . '/en');
-        echo "expert data";
-        return [];
+    
+    /**
+     * Get all metadata for the given resource
+     * @param string $id
+     * @param string $lang
+     * @return JsonResponse
+     */
+    public function expertData(string $id, string $lang = "en") {
+        $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
+        return $controller->getExpertData($id, $lang);
     }
 
-    public function getTopCollections(int $count, string $lang = "en"): JsonResponse {
+    
+    
+    public function topCollections__(int $count, string $lang = "en"): JsonResponse {
         $schema = $this->repoDb->getSchema();
 
         $scfg = new \acdhOeaw\arche\lib\SearchConfig();
