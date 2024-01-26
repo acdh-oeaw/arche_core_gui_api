@@ -160,6 +160,7 @@ class ArcheCoreHelper {
     public function extractExpertView(object $pdoStmt, int $resId, array $contextRelatives, string $lang = "en"): object {
         $this->resources = [(string) $resId => (object) ['id' => $resId]];
         $relArr = [];
+        
         while ($triple = $pdoStmt->fetchObject()) {
           
             $id = (string) $triple->id;
@@ -195,9 +196,9 @@ class ArcheCoreHelper {
                     $relArr[$triple->value]['id'] = $triple->value;
                     $tid = $triple->value;
                     $this->resources[$tid] ??= (object) ['id' => (int) $tid];
-                    $this->resources[$id]->$property[$lang][] = (object) $this->resources[$tid];
+                    $this->resources[$id]->$property[] = (object) $this->resources[$tid];
                 } else {
-                    $this->resources[$id]->$property[$lang][] = (object)$triple;
+                    $this->resources[$id]->$property[] = (object)$triple;
                 }
             }
            
@@ -205,12 +206,9 @@ class ArcheCoreHelper {
         if (count($this->resources) < 2) {
             return new \stdClass();
         }
-
        
         $this->changePropertyToShortcut((string) $resId);
-
         $this->setDefaultTitle($lang, (string) $resId);
-
         return $this->resources[(string) $resId];
     }
 
@@ -221,22 +219,21 @@ class ArcheCoreHelper {
     private function setDefaultTitle(string $lang, string $resId) {
         foreach ($this->resources[(string) $resId] as $prop => $val) {
             if (is_array($val)) {
-                foreach ($val[$lang] as $k => $v) {
+                foreach ($val as $k => $v) {
                     if (!isset($v->type)) {
-                        unset($this->resources[(string) $resId]->$prop[$lang][$k]);
+                        unset($this->resources[(string) $resId]->$prop[$k]);
                     }
-
                     if (!$v->value && $v->type) {
                         foreach ($v->titles as $tk => $tv) {
                             if (($lang == 'en') && $tk === 'de') {
-                                $this->resources[(string) $resId]->$prop[$lang][$k]->value = $tv;
-                                $this->resources[(string) $resId]->$prop[$lang][$k]->relvalue = $tv;
+                                $this->resources[(string) $resId]->$prop[$k]->value = $tv;
+                                $this->resources[(string) $resId]->$prop[$k]->relvalue = $tv;
                             } elseif (($lang == 'de') && $tk === 'und') {
-                                $this->resources[(string) $resId]->$prop[$lang][$k]->value = $tv;
-                                $this->resources[(string) $resId]->$prop[$lang][$k]->relvalue = $tv;
+                                $this->resources[(string) $resId]->$prop[$k]->value = $tv;
+                                $this->resources[(string) $resId]->$prop[$k]->relvalue = $tv;
                             } else {
-                                $this->resources[(string) $resId]->$prop[$lang][$k]->value = $tv;
-                                $this->resources[(string) $resId]->$prop[$lang][$k]->relvalue = $tv;
+                                $this->resources[(string) $resId]->$prop[$k]->value = $tv;
+                                $this->resources[(string) $resId]->$prop[$k]->relvalue = $tv;
                             }
                         }
                     }
