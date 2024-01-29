@@ -113,7 +113,6 @@ class ArcheCoreHelper {
 
         while ($triple = $obj->fetchObject()) {
             $rid = (string) $triple->id;
-           
 
             if ($rid === $id) {
                 $triple->lang = ($triple->lang === null) ? 'en' : $triple->lang;
@@ -137,7 +136,7 @@ class ArcheCoreHelper {
             }
         }
 
-        die();
+
         foreach ($root as $rpk => $rpv) {
             foreach ($rpv as $rk => $rv) {
                 if (array_key_exists($rk, $relArr)) {
@@ -160,13 +159,20 @@ class ArcheCoreHelper {
     public function extractExpertView(object $pdoStmt, int $resId, array $contextRelatives, string $lang = "en"): object {
         $this->resources = [(string) $resId => (object) ['id' => $resId]];
         $relArr = [];
-        
         while ($triple = $pdoStmt->fetchObject()) {
-          
+
             $id = (string) $triple->id;
             $this->resources[$id] ??= (object) ['id' => (int) $id];
 
             if ($triple->id !== $resId && isset($contextRelatives[$triple->property])) {
+
+                if ($triple->property === 'https://vocabs.acdh.oeaw.ac.at/schema#hasLicenseSummary') {
+                    echo "MAIN";
+                    echo "<pre>";
+                    var_dump($this->resources[$id]->$property);
+                    echo "</pre>";
+                }
+
                 $property = $contextRelatives[$triple->property];
                 $relvalues = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
 
@@ -181,6 +187,21 @@ class ArcheCoreHelper {
                         $this->resources[$id]->relvalue = $relvalues->value;
                         $this->resources[$id]->value = $relvalues->value;
                     }
+                    if ($lang === $relvalues->lang) {
+                        $this->resources[$id]->value = $relvalues->value;
+                        $this->resources[$id]->lang = $lang;
+                    } else {
+                        if (($lang == 'en') && $relvalues->lang === 'de') {
+                            $this->resources[$id]->value = $relvalues->value;
+                            $this->resources[$id]->lang = $lang;
+                        } elseif (($lang == 'de') && $relvalues->lang === 'und') {
+                            $this->resources[$id]->value = $relvalues->value;
+                            $this->resources[$id]->lang = $lang;
+                        } else {
+                            $this->resources[$id]->value = $relvalues->value;
+                            $this->resources[$id]->lang = $lang;
+                        }
+                    }
                     $this->resources[$id]->titles[$relvalues->lang] = $relvalues->value;
                 }
 
@@ -192,23 +213,48 @@ class ArcheCoreHelper {
                 $this->resources[$id]->repoid = $id;
             } elseif ($triple->id === $resId) {
                 $property = $triple->property;
+                
+                if ($triple->property === 'https://vocabs.acdh.oeaw.ac.at/schema#hasLicenseSummary') {
+                    echo "ELSE";
+                    echo "<pre>";
+                    var_dump($this->resources[$id]->$property);
+                    echo "</pre>";
+                }
+
+
+
                 if ($triple->type === 'REL') {
+                    
                     $relArr[$triple->value]['id'] = $triple->value;
                     $tid = $triple->value;
                     $this->resources[$tid] ??= (object) ['id' => (int) $tid];
-                    $this->resources[$id]->$property[] = (object) $this->resources[$tid];
+                    $this->resources[$id]->$property[$lang][] = (object) $this->resources[$tid];
                 } else {
-                    $this->resources[$id]->$property[] = (object)$triple;
+                     if ($triple->property === 'https://vocabs.acdh.oeaw.ac.at/schema#hasLicenseSummary') {
+                    echo "ELSE 2";
+                    echo "<pre>";
+                    var_dump($this->resources[$id]->$property);
+                    echo "</pre>";
+                }
+                //we have to check if there is already a lang
+                    $this->resources[$id]->$property[$lang][] = (object) $triple;
+                    
+                     if ($triple->property === 'https://vocabs.acdh.oeaw.ac.at/schema#hasLicenseSummary') {
+                    echo "ELSE 2 after";
+                    echo "<pre>";
+                    var_dump($this->resources[$id]->$property);
+                    echo "</pre>";
+                }
                 }
             }
-           
         }
         if (count($this->resources) < 2) {
             return new \stdClass();
         }
-       
+        die();
         $this->changePropertyToShortcut((string) $resId);
-        $this->setDefaultTitle($lang, (string) $resId);
+
+//        $this->setDefaultTitle($lang, (string) $resId);
         return $this->resources[(string) $resId];
     }
 
@@ -219,21 +265,26 @@ class ArcheCoreHelper {
     private function setDefaultTitle(string $lang, string $resId) {
         foreach ($this->resources[(string) $resId] as $prop => $val) {
             if (is_array($val)) {
-                foreach ($val as $k => $v) {
+                echo "<pre>";
+                var_dump($val);
+                echo "</pre>";
+
+                foreach ($val[$lang] as $k => $v) {
                     if (!isset($v->type)) {
-                        unset($this->resources[(string) $resId]->$prop[$k]);
+                        unset($this->resources[(string) $resId]->$prop[$lang][$k]);
                     }
+
                     if (!$v->value && $v->type) {
                         foreach ($v->titles as $tk => $tv) {
                             if (($lang == 'en') && $tk === 'de') {
-                                $this->resources[(string) $resId]->$prop[$k]->value = $tv;
-                                $this->resources[(string) $resId]->$prop[$k]->relvalue = $tv;
+                                $this->resources[(string) $resId]->$prop[$lang][$k]->value = $tv;
+                                $this->resources[(string) $resId]->$prop[$lang][$k]->relvalue = $tv;
                             } elseif (($lang == 'de') && $tk === 'und') {
-                                $this->resources[(string) $resId]->$prop[$k]->value = $tv;
-                                $this->resources[(string) $resId]->$prop[$k]->relvalue = $tv;
+                                $this->resources[(string) $resId]->$prop[$lang][$k]->value = $tv;
+                                $this->resources[(string) $resId]->$prop[$lang][$k]->relvalue = $tv;
                             } else {
-                                $this->resources[(string) $resId]->$prop[$k]->value = $tv;
-                                $this->resources[(string) $resId]->$prop[$k]->relvalue = $tv;
+                                $this->resources[(string) $resId]->$prop[$lang][$k]->value = $tv;
+                                $this->resources[(string) $resId]->$prop[$lang][$k]->relvalue = $tv;
                             }
                         }
                     }
@@ -305,5 +356,4 @@ class ArcheCoreHelper {
 
         return $root;
     }
-
 }
