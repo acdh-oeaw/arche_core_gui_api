@@ -26,7 +26,17 @@ arche_core_api_expert:
     lang: '^[^\?]*$'
     _permission: 'access content'
     _access: 'TRUE'     
-    
+
+arche_core_api_breadcrumb:    
+  path: '/api/breadcrumb/{id}/{lang}'
+  defaults:
+    _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::breadcrumbData'
+  requirements:
+    id: '^[^\?]*$'
+    lang: '^[^\?]*$'
+    _permission: 'access content'
+    _access: 'TRUE'     
+        
 arche_core_api_topcollections:    
   path: '/api/tp/{count}/{lang}'
   defaults:

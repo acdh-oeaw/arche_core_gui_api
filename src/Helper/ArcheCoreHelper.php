@@ -150,52 +150,51 @@ class ArcheCoreHelper {
     }
 
     /**
+     * Generate the breadcrumb data
+     * @param object $pdoStmt
+     * @param int $resId
+     * @param array $context
+     * @param string $lang
+     * @return object
+     */
+    public function extractBreadcrumbView(object $pdoStmt, int $resId, array $context, string $lang = "en"): object {
+        $this->resources = [(string) $resId => (object) ['id' => $resId, 'language' => $lang]];
+        while ($triple = $pdoStmt->fetchObject()) {
+            echo "<pre>";
+            var_dump($triple);
+            echo "</pre>";
+
+           
+            $id = (string) $triple->id;
+            if (!isset($context[$triple->property])) {
+                continue;
+            }
+            $property = $context[$triple->property];
+            $this->resources[$id] ??= (object) ['id' => $id];
+            if ($triple->type === 'REL') {
+                $tid = $triple->value;
+                $this->resources[$tid] ??= (object) ['id' => $tid];
+                $this->resources[$id]->$property[] = $this->resources[$tid];
+            } else {
+                $this->resources[$id]->$property[] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
+            }
+        }
+        
+        echo "<pre>";
+        var_dump($this->resources[(string) $resId]);
+        echo "</pre>";
+
+        die();
+        return $this->resources[(string) $resId];
+    }
+    
+    /**
      * Get all metadata for a given resource
      * @param object $pdoStmt
      * @param int $resId
      * @param array $contextRelatives
      * @return object
      */
-    public function extractExpertView_(object $pdoStmt, int $resId, array $contextRelatives, string $lang = "en"): array {
-        $this->resources = [(string) $resId => (object) ['id' => $resId]];
-        $relArr = [];
-        $resId = (string) $resId;
-        $resource = [];
-        $resources = [$resId => $resource];
-        while ($triple = $pdoStmt->fetchObject()) {
-            //echo "$triple->id $triple->property $triple->value\n";
-            $id = (string) $triple->id;
-            $property = $triple->property;
-            $context = $id === $resId ? $contextResource : $contextRelatives;
-            $shortProperty = $context[$triple->property] ?? false;
-            $resources[$id] ??= (object) ['id' => $id];
-            $tid = null;
-            if ($triple->type === 'REL') {
-                $tid = $triple->value;
-                $resources[$tid] ??= (object) ['id' => $tid];
-            }
-
-            if ($triple->type !== 'REL') {
-                if ($shortProperty) {
-                    // ordinary property existing in the context
-                    $resources[$id]->{$shortProperty}[$triple->lang] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
-                } elseif ($id === $resId) {
-                    // metadata property - out of context but belongs to the main resource 
-                    $resource[$property][$resId] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
-                }
-            } elseif ($shortProperty) {
-                $resources[$id]->{$shortProperty}[$tid] = $resources[$tid];
-            } elseif ($id === $resId) {
-                $resource[$property][$tid] = $resources[$tid];
-            }
-        }
-        $this->resources = $resource;
-
-        $this->changePropertyToShortcut();
-
-        return $this->resources;
-    }
-
     public function extractExpertView(object $pdoStmt, int $resId, array $contextRelatives, string $lang = "en"): object {
         $this->resources = [(string) $resId => (object) ['id' => $resId, 'language' => $lang]];
         $relArr = [];
@@ -264,9 +263,8 @@ class ArcheCoreHelper {
 
             if (is_array($pval)) {
                 foreach ($pval as $rid => $tv) {
-                    if (!$tv->value) {
-                        if ($tv->titles) {
-
+                    if (!isset($tv->value)) {
+                        if (isset($tv->titles) && is_array($tv->titles)) {
                             if (array_key_exists($lang, $tv->titles)) {
                                 $this->resources[$resId]->$prop[$rid]->value = $tv->titles[$lang];
                             } else {

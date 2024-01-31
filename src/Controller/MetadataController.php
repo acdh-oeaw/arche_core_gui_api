@@ -152,38 +152,44 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         return new JsonResponse($results);
     }
 
-    public function getBreadcrumb(string $id) {
+    public function getBreadcrumb(string $id, string $lang = "en") {
+        $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
+        
+         if (empty($id)) {
+            return new JsonResponse(array("Please provide an id"), 404, ['Content-Type' => 'application/json']);
+        }
+
+        $result = [];
+
+        try {
+            $res = new \acdhOeaw\arche\lib\RepoResourceDb($id, $this->repoDb);
+        } catch (\Exception $ex) {
+            return [];
+        }
+
         $schema = $this->repoDb->getSchema();
         $context = [
             $schema->label => 'title',
             $schema->parent => 'parent',
         ];
 
-        $resId = 417151;
-        $res = new \acdhOeaw\arche\lib\RepoResourceDb($resId, $this->repoDb);
         $pdoStmt = $res->getMetadataStatement(
-                '0_99_0_0',
+                '0_99_1_0',
                 $schema->parent,
                 array_keys($context),
                 array_keys($context)
         );
-        $resources = [];
-        while ($triple = $pdoStmt->fetchObject()) {
-            $id = (string) $triple->id;
-            if (!isset($context[$triple->property])) {
-                continue;
-            }
-            $property = $context[$triple->property];
-            $resources[$id] ??= (object) ['id' => $id];
-            if ($triple->type === 'REL') {
-                $tid = $triple->value;
-                $resources[$tid] ??= (object) ['id' => $tid];
-                $resources[$id]->$property[] = $resources[$tid];
-            } else {
-                $resources[$id]->$property[] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
-            }
+        $result = [];
+
+        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
+        $result = $helper->extractBreadcrumbView($pdoStmt, $id, $context, $lang);
+
+        if (count((array) $result) == 0) {
+            return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
-        print_r($resources[(string) $resId]);
+
+        return new JsonResponse(array("data" => $result), 200, ['Content-Type' => 'application/json']);
+        
     }
 
     public function getExpertData(string $id, string $lang = "en") {
