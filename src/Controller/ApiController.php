@@ -47,9 +47,14 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
     }
     
     
-     public function breadcrumbData(string $id, string $lang = "en") {
+    public function breadcrumbData(string $id, string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getBreadcrumb($id, $lang);
+    }
+
+    public function childData(string $identifier, string $lang, string $limit, string $page, string $order) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\ChildController();
+        return $controller->getChildData($identifier, $lang, $limit, $page, $order);
     }
 
     

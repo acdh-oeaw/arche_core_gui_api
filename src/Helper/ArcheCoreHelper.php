@@ -102,7 +102,33 @@ class ArcheCoreHelper {
     }
 
     /**
-     * Extract the GUI data from the RDF data for a given resource (id)
+     * Ectract the api data from the rdf data
+     * @param array $result
+     * @param array $properties
+     * @return array
+     */
+    public function extractChildView(array $result, array $properties): array {
+        $return = [];
+        foreach ($result as $v) {
+            $order = $v->resource->searchOrder[0]->value;
+            
+            $return[$order]['title'] = $v->resource->title[0]->value;
+            $return[$order]['id'] = $v->resource->id;
+            $return[$order]['avDate'] = $v->resource->avDate[0]->value;
+            $return[$order]['class'] = $v->resource->class[0]->value;
+            $return[$order]['shortcut'] = str_replace( 'https://vocabs.acdh.oeaw.ac.at/schema#', '',$v->resource->class[0]->value);
+            foreach ($v->resource->identifier as $key => $val) {
+                if (strpos($val->value, 'https://id.acdh.oeaw.ac.at/') !== false) {
+                    $return[$order]['identifier'] = $val->value;
+                }
+            }
+            $return[$order]['order'] = $order;
+        }
+        return $return;
+    }
+
+    /**
+     * Extract the GUI data from the RDF data for a given resource (id) - NOT IN USE
      * @param object $obj
      * @param string $id
      * @return type
@@ -164,7 +190,6 @@ class ArcheCoreHelper {
             var_dump($triple);
             echo "</pre>";
 
-           
             $id = (string) $triple->id;
             if (!isset($context[$triple->property])) {
                 continue;
@@ -179,7 +204,7 @@ class ArcheCoreHelper {
                 $this->resources[$id]->$property[] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
             }
         }
-        
+
         echo "<pre>";
         var_dump($this->resources[(string) $resId]);
         echo "</pre>";
@@ -187,7 +212,7 @@ class ArcheCoreHelper {
         die();
         return $this->resources[(string) $resId];
     }
-    
+
     /**
      * Get all metadata for a given resource
      * @param object $pdoStmt
@@ -253,12 +278,12 @@ class ArcheCoreHelper {
         return $this->resources[(string) $resId];
     }
 
-     /**
+    /**
      * If the property doesn't have the actual lang related value, then we 
      * have to create one based on en/de/und/or first array element
      */
     private function setDefaultTitle(string $lang, string $resId) {
- //var_dump($this->resources[$resId]->{'acdh:hasCurator'}[11214]->id);
+        //var_dump($this->resources[$resId]->{'acdh:hasCurator'}[11214]->id);
         foreach ($this->resources[$resId] as $prop => $pval) {
 
             if (is_array($pval)) {
@@ -284,6 +309,7 @@ class ArcheCoreHelper {
             }
         }
     }
+
     /**
      * change the long proeprty urls inside the resource array
      * @param string $resId
@@ -307,6 +333,7 @@ class ArcheCoreHelper {
         }
     }
 
+    //not in use
     public function extractInverseDataFromCoreApiWithId(object $obj, string $id) {
         $root = [];
         $relArr = [];
