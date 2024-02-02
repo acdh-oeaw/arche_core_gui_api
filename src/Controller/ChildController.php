@@ -20,7 +20,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
     }
 
-    public function getChildData(string $id, string $lang, string $limit, string $page, string $order) {
+    public function getChildData(string $id, array $searchProps, string $lang): Response {
 
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
@@ -46,30 +46,29 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         //$searchPhrase = '170308';
         $searchPhrase = '';
         $t = microtime(true);
+        
         list($result, $totalCount) = $this->getInverse($id, $context, $searchCfg, $property, $searchPhrase);
 
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractChildView($result, ['id', 'title', 'class', 'avDate']);
+        $result = $helper->extractChildView($result, ['id', 'title', 'class', 'avDate'], $totalCount, $this->repoDb->getBaseUrl());
 
         if (count((array) $result) == 0) {
-            return new Response(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
+            return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
-
         
         $response = new Response();
         $response->setContent(
             json_encode(
                 array(
                     "aaData" => (array) $result,
-                    "iTotalRecords" => count((array) $result),
-                    "iTotalDisplayRecords" => count((array) $result),
-                    "draw" => 1,
-                    //"draw" => intval($searchProps['draw']),
-                    "cols" =>  array_keys((array) $result[1]),
-                    "order" => $order,
-                    "orderby" => $order,
+                    "iTotalRecords" => (string)$result[0]['sumcount'],
+                    "iTotalDisplayRecords" => (string)$result[0]['sumcount'],
+                    "draw" => intval($searchProps['draw']),
+                    "cols" =>  array_keys((array) $result[0]),
+                    "order" => 'asc',
+                    "orderby" => 1,
                     "childTitle" => "title",
-                    "rootType" => "root type"
+                    "rootType" => "https://vocabs.acdh.oeaw.ac.at/schema#TopCollection"
                  )
             )
         );

@@ -107,22 +107,22 @@ class ArcheCoreHelper {
      * @param array $properties
      * @return array
      */
-    public function extractChildView(array $result, array $properties): array {
+    public function extractChildView(array $result, array $properties, string $totalCount, string $baseUrl): array {
         $return = [];
+        
         foreach ($result as $v) {
             $order = $v->resource->searchOrder[0]->value;
-            
-            $return[$order]['title'] = $v->resource->title[0]->value;
-            $return[$order]['id'] = $v->resource->id;
-            $return[$order]['avDate'] = $v->resource->avDate[0]->value;
-            $return[$order]['class'] = $v->resource->class[0]->value;
-            $return[$order]['shortcut'] = str_replace( 'https://vocabs.acdh.oeaw.ac.at/schema#', '',$v->resource->class[0]->value);
-            foreach ($v->resource->identifier as $key => $val) {
-                if (strpos($val->value, 'https://id.acdh.oeaw.ac.at/') !== false) {
-                    $return[$order]['identifier'] = $val->value;
-                }
-            }
-            $return[$order]['order'] = $order;
+            $obj = [];
+           
+            $obj['title'] = $v->resource->title[0]->value;
+            $obj['property'] = $v->property;
+            $obj['type'] = $v->resource->class[0]->value;
+            $obj['avDate'] = $v->resource->avDate[0]->value;
+            $obj['shortcut'] = str_replace( 'https://vocabs.acdh.oeaw.ac.at/schema#', '',$v->resource->class[0]->value);
+            $obj['acdhid'] = $baseUrl.$v->resource->id;
+            $obj['identifier'] = $v->resource->id;
+            $obj['sumcount'] = $totalCount;
+            $return[] =$obj;
         }
         return $return;
     }

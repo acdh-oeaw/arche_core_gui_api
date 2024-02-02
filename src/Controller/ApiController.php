@@ -6,7 +6,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Component\Utility\Xss;
 
-
 class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseController {
 
     private function setProps(): array {
@@ -34,7 +33,7 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         echo $identifier;
         return [];
     }
-    
+
     /**
      * Get all metadata for the given resource
      * @param string $id
@@ -45,20 +44,17 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getExpertData($id, $lang);
     }
-    
-    
+
     public function breadcrumbData(string $id, string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getBreadcrumb($id, $lang);
     }
 
-    public function childData(string $identifier, string $lang, string $limit, string $page, string $order) {
+    public function childData(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\ChildController();
-        return $controller->getChildData($identifier, $lang, $limit, $page, $order);
+        return $controller->getChildData($identifier, $this->setProps(), $lang);
     }
 
-    
-    
     public function topCollections__(int $count, string $lang = "en"): JsonResponse {
         $schema = $this->repoDb->getSchema();
 

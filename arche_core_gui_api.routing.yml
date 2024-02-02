@@ -48,7 +48,7 @@ arche_core_api_topcollections:
     _access: 'TRUE'         
     
 arche_core_api_child:    
-    path: '/api/child/{identifier}/{lang}/{limit}/{page}/{order}'
+    path: '/api/child/{identifier}/{lang}'
     defaults:
         _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::childData'
     requirements:
