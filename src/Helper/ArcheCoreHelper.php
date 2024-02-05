@@ -109,22 +109,88 @@ class ArcheCoreHelper {
      */
     public function extractChildView(array $result, array $properties, string $totalCount, string $baseUrl): array {
         $return = [];
-        
+
         foreach ($result as $v) {
             $order = $v->resource->searchOrder[0]->value;
             $obj = [];
-           
+
             $obj['title'] = $v->resource->title[0]->value;
             $obj['property'] = $v->property;
             $obj['type'] = $v->resource->class[0]->value;
             $obj['avDate'] = $v->resource->avDate[0]->value;
-            $obj['shortcut'] = str_replace( 'https://vocabs.acdh.oeaw.ac.at/schema#', '',$v->resource->class[0]->value);
-            $obj['acdhid'] = $baseUrl.$v->resource->id;
+            $obj['shortcut'] = str_replace('https://vocabs.acdh.oeaw.ac.at/schema#', '', $v->resource->class[0]->value);
+            $obj['acdhid'] = $baseUrl . $v->resource->id;
             $obj['identifier'] = $v->resource->id;
             $obj['sumcount'] = $totalCount;
-            $return[] =$obj;
+            $return[] = $obj;
         }
         return $return;
+    }
+
+    public function extractChildTreeView(array $result, string $totalCount, string $baseUrl): array {
+        $return = [];
+
+        if (count($result) > 0) {
+            foreach ($result as $k => $v) {
+                $return[$k] = $v->resource;
+                $this->createBaseProperties($v->resource, $baseUrl);
+                $this->isPublic($v->resource);
+                $this->isDirOrFile($v->resource);
+                
+            }
+        } else {
+            $return[0] = array("uri" => 0, "text" => "There are no child elements",
+                "userAllowedToDL" => false, "dir" => false, "children" => false);
+        }
+        return $return;
+    }
+
+    /**
+     * Set up the base parameters
+     * @param type $v
+     * @return void
+     */
+    private function createBaseProperties(&$v, string $baseUrl): void {
+        $v->uri = $v->id;
+        $v->uri_dl = $baseUrl . $v->id;
+        $v->text = $v->title[0]->value;
+        $v->resShortId = $v->id;
+        
+        $v->accessRestriction = ($v->accessRestriction[0]->value) ? $v->accessRestriction[0]->value : "public";
+        $v->rdftype = ($v->rdftype[0]->value) ? $v->rdftype[0]->value : "";
+        $v->title = ($v->title[0]->value) ? $v->title[0]->value : "";
+        $v->avDate = ($v->avDate[0]->value) ? $v->avDate[0]->value : "";
+        $v->encodedUri = $baseUrl . $v->id;
+        $v->a_attr = array("href" => str_replace('api/', 'browser/metadata/', $baseUrl.$v->id));
+        $v->accessRestriction = 'public';
+    }
+
+    /**
+     * Actual resource accessrestriction
+     * @param type $v
+     */
+    private function isPublic(&$v): void {
+        if ($v->accessRestriction == 'public') {
+            $v->userAllowedToDL = true;
+        } else {
+            $v->userAllowedToDL = false;
+        }
+    }
+
+    /**
+     * The actual resource is a binary file or a directory
+     * @param type $v
+     */
+    private function isDirOrFile(&$v): void {
+        $allowedFormats = ['https://vocabs.acdh.oeaw.ac.at/schema#Resource', 'https://vocabs.acdh.oeaw.ac.at/schema#Metadata'];
+        
+        if (isset($v->rdftype)  && in_array($v->rdftype, $allowedFormats)) {
+            $v->dir = false;
+            $v->icon = "jstree-file";
+        } else {
+            $v->dir = true;
+            $v->children = true;
+        }
     }
 
     /**

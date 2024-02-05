@@ -52,12 +52,17 @@ arche_core_api_child:
     defaults:
         _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::childData'
     requirements:
-        id: '^[^\?]*$'
+        identifier: '^[^\?]*$'
         lang: '^[^\?]*$'
-        limit: '^[^\?]*$'
-        page: '^[^\?]*$'
-        order: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'    
         
-        
+arche_core_api_child_tree:    
+    path: '/api/child-tree/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::childTreeData'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'            

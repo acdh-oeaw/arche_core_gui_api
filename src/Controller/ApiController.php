@@ -50,9 +50,26 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getBreadcrumb($id, $lang);
     }
 
+    /**
+     * The Child DataTable api endpoint
+     * @param string $identifier
+     * @param string $lang
+     * @return type
+     */
     public function childData(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\ChildController();
         return $controller->getChildData($identifier, $this->setProps(), $lang);
+    }
+    
+    /**
+     * The Child tree view api endpoint
+     * @param string $identifier
+     * @param string $lang
+     * @return type
+     */
+    public function childTreeData(string $identifier, string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\ChildController();
+        return $controller->getChildTreeData($identifier, $this->setProps(), $lang);
     }
 
     public function topCollections__(int $count, string $lang = "en"): JsonResponse {
