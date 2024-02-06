@@ -38,14 +38,19 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $schema = $this->repoDb->getSchema();
         $property = $schema->parent;
 
-        $context = [
+        $resContext = [
             $schema->label => 'title',
-            \zozlak\RdfConstants::RDF_TYPE => 'class',
+            \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
             $schema->creationDate => 'avDate',
             $schema->id => 'identifier',
+            $schema->accessRestriction => 'accessRestriction',
+            $schema->binarySize => 'binarysize',
+            $schema->fileName => 'filename',
+            $schema->ingest->location => 'locationpath'
         ];
-        $contextRelatives = [
-            $schema->label => 'title'
+
+        $relContext = [
+            (string) $schema->label => 'title',
         ];
         $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
         $searchCfg->offset = $searchProps['offset'];
@@ -60,10 +65,10 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $searchPhrase = '';
         $t = microtime(true);
 
-        list($result, $totalCount) = $this->getInverse($id, $context, $searchCfg, $property, $searchPhrase);
+        list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $searchCfg, $property, $searchPhrase);
 
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractChildView($result, ['id', 'title', 'class', 'avDate'], $totalCount, $this->repoDb->getBaseUrl());
+        $result = $helper->extractChildView($result, ['id', 'title', 'class', 'avDate'], $totalCount, $this->repoDb->getBaseUrl(), $lang);
 
         if (count((array) $result) == 0) {
             return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
@@ -107,7 +112,8 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $result = [];
         $schema = $this->repoDb->getSchema();
         $property = [$schema->parent, 'http://www.w3.org/2004/02/skos/core#prefLabel'];
-        $context = [
+
+        $resContext = [
             $schema->label => 'title',
             \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
             $schema->creationDate => 'avDate',
@@ -116,6 +122,10 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
             $schema->binarySize => 'binarysize',
             $schema->fileName => 'filename',
             $schema->ingest->location => 'locationpath'
+        ];
+
+        $relContext = [
+            (string) $schema->label => 'title',
         ];
 
         $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
@@ -129,10 +139,10 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $searchCfg->orderByLang = $lang;
         //$searchPhrase = '170308';
         $searchPhrase = '';
-        list($result, $totalCount) = $this->getInverse($id, $context, $searchCfg, $property, $searchPhrase);
-        
+        list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $searchCfg, $property, $searchPhrase);
+
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractChildTreeView($result, $totalCount, $this->repoDb->getBaseUrl());
+        $result = $helper->extractChildTreeView($result, $totalCount, $this->repoDb->getBaseUrl(), $lang);
 
         if (count((array) $result) == 0) {
             return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
@@ -151,7 +161,8 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
 
     private function getInverse(
             int $resId,
-            array $context, // RDF properties to object properties mapping
+            array $resContext, // RDF properties to object properties mapping for the inverse resources
+            array $relContext = [], // RDF properties to object properties mapping for other resource
             ?\acdhOeaw\arche\lib\SearchConfig $searchCfg = null, // specify ordering and paging here
             string|array|null $properties = null, // allowed reverse property(ies); if null, all are fetched
             string $searchPhrase = '', // search phrase for narrowing the results; search is performed only in properties listed in the $context
@@ -170,45 +181,58 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $resId = (string) $resId;
 
         $searchCfg ??= new \acdhOeaw\arche\lib\SearchConfig();
-        $searchCfg->metadataMode = 'resource';
+        $searchCfg->metadataMode = count($relContext) > 0 ? '0_0_1_0' : 'resource';
         if (is_array($properties)) {
-            $searchCfg->resourceProperties = array_merge(array_keys($context), $properties);
+            $searchCfg->resourceProperties = array_merge(array_keys($resContext), $properties);
+        }
+        if (count($relContext) > 0) {
+            $searchCfg->relativesProperties = array_keys($relContext);
         }
 
         $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm($properties, $res->getUri(), type: \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION);
         if (!empty($searchPhrase)) {
-            $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm(array_keys($context), $searchPhrase, '~');
+            $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm(array_keys($resContext), $searchPhrase, '~');
         }
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms($searchTerms, $searchCfg);
         $relations = [];
         $resources = [];
+        $context = array_merge($relContext, $resContext);
         $context[$schema->searchOrder] = 'searchOrder';
         $context[$schema->searchOrderValue . '1'] = 'searchValue';
         $totalCount = null;
         while ($triple = $pdoStmt->fetchObject()) {
             $triple->value ??= '';
             $id = (string) $triple->id;
-            
             $shortProperty = $context[$triple->property] ?? false;
             $property = $shortProperty ?: $triple->property;
 
-           
-            
             $resources[$id] ??= (object) ['id' => $id];
-          
 
-            if ($triple->type === 'REL' && $triple->value === $resId && ($properties === null || in_array($triple->property, $properties))) {
-                $relations[] = (object) [
-                            'property' => $property,
-                            'resource' => $resources[$id],
-                ];
+            if ($triple->type === 'REL') {
+                if ($triple->value === $resId && ($properties === null || in_array($triple->property, $properties))) {
+                    $relations[] = (object) [
+                                'property' => $property,
+                                'resource' => $resources[$id],
+                    ];
+                } elseif ($triple->value !== $resId && $shortProperty) {
+                    $tid = (string) $triple->value;
+                    $resources[$tid] ??= (object) ['id' => $tid];
+                    $resources[$id]->{$shortProperty}[] = $resources[$tid];
+                }
             } elseif ($shortProperty) {
-                $resources[$id]->{$shortProperty}[] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
+                $tripleVal = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
+                if ($shortProperty === "searchOrder") {
+                    $resources[$id]->{$shortProperty}[] = $tripleVal;
+                } else {
+                    $tLang = (isset($tripleVal->lang)) ? $tripleVal->lang : $triple->lang;
+                    (empty($tLang)) ? $tLang = $searchCfg->orderByLang : "";
+                    $resources[$id]->{$shortProperty}[$tLang] = $tripleVal;
+                }
             } elseif ($triple->property === $totalCountProp) {
                 $totalCount = $triple->value;
-            } 
+            }
         }
-       
+
         $order = array_map(fn($x) => $x->resource->searchOrder[0]->value, $relations);
         array_multisort($order, $relations);
         return [$relations, $totalCount];
