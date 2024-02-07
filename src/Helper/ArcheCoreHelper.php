@@ -154,7 +154,7 @@ class ArcheCoreHelper {
         $v->uri_dl = $baseUrl . $v->id;
         $v->text = $this->setTripleValueTitle($v->title, $lang);
         $v->resShortId = $v->id;
-        
+
         if (isset($v->accessRestriction)) {
             $v->accessRestriction = $this->setTripleValueTitle($v->accessRestriction, $lang);
         }
@@ -186,7 +186,7 @@ class ArcheCoreHelper {
                 }
             }
             if (isset($obj->title)) {
-               
+
                 if (array_key_exists($lang, $obj->title)) {
                     return $obj->title[$lang]->value;
                 } elseif ($lang === "en" && (array_key_exists('de', $obj->title))) {
@@ -232,52 +232,28 @@ class ArcheCoreHelper {
         }
     }
 
-    /**
-     * Extract the GUI data from the RDF data for a given resource (id) - NOT IN USE
-     * @param object $obj
-     * @param string $id
-     * @return type
-     */
-    public function extractDataFromCoreApiWithId(object $obj, string $id) {
-        $root = [];
-        $relArr = [];
+    public function extractRootView(object $pdoStmt, array $properties, array $propertyLabel, string $lang) {
+        $this->resources = [];
+        while ($triple = $pdoStmt->fetchObject()) {
+            $id = (string) $triple->id;
+            $property = $triple->property;
 
-        while ($triple = $obj->fetchObject()) {
-            $rid = (string) $triple->id;
-
-            if ($rid === $id) {
-                $triple->lang = ($triple->lang === null) ? 'en' : $triple->lang;
-                if ($triple->type === 'REL') {
-                    $root[$triple->property][$triple->value] = $triple;
-                } else {
-                    $root[$triple->property][] = $triple;
-                }
-            } else {
-                $object = (object) [
-                            'id' => $triple->id,
-                            'property' => $triple->property,
-                            'type' => $triple->type,
-                            'lang' => ($triple->lang === null ? 'en' : $triple->lang),
-                            'value' => $triple->value
-                ];
-
-                if ($triple->property === "https://vocabs.acdh.oeaw.ac.at/schema#hasTitle") {
-                    $relArr[$triple->id][$triple->lang] = $object;
+            if (in_array($triple->property, $properties)) {
+                $tLang = (empty($triple->lang)) ? $triple->lang = $lang : $triple->lang;
+                $this->resources[$id][$triple->property][$triple->lang] = $triple;
+            }
+        }
+        $this->setRootDefaultTitle($lang);
+        foreach($this->resources as $id => $obj) {
+            foreach($obj as $prop => $o) {
+                
+                if(array_key_exists($prop, $propertyLabel)) {
+                    $this->resources[$id][$propertyLabel[$prop]] = $o[$lang];
+                    unset($this->resources[$id][$prop]);
                 }
             }
         }
-
-
-        foreach ($root as $rpk => $rpv) {
-            foreach ($rpv as $rk => $rv) {
-                if (array_key_exists($rk, $relArr)) {
-                    $root[$rpk][$rk]->values = $relArr[$rk];
-                }
-            }
-        }
-
-
-        return $root;
+        return $this->resources;
     }
 
     /**
@@ -372,10 +348,36 @@ class ArcheCoreHelper {
         }
 
         $this->changePropertyToShortcut((string) $resId);
-
         $this->setDefaultTitle($lang, $resId);
-
         return $this->resources[(string) $resId];
+    }
+
+    /**
+     * this is for the single objects, where we dont have multiple value
+     * @param string $lang
+     */
+    private function setRootDefaultTitle(string $lang) {
+
+        foreach ($this->resources as $id => $object) {
+            foreach ($object as $prop => $obj) {
+
+                if (array_key_exists($lang, $obj)) {
+                    $this->resources[$id][$prop][$lang] = $obj[$lang]->value;
+                } else {
+                    if ($lang === "en" && array_key_exists('de', $obj)) {
+                        $this->resources[$id][$prop][$lang] = $obj['de']->value;
+                        unset($this->resources[$id][$prop]['de']);
+                    } elseif ($lang === "de" && array_key_exists('en', $obj)) {
+                        $this->resources[$id][$prop][$lang] = $obj['en']->value;
+                        unset($this->resources[$id][$prop]['en']);
+                    } elseif (array_key_exists('und', $obj)) {
+                        $this->resources[$id][$prop][$lang] = $obj['und']->value;
+                    } else {
+                        $this->resources[$id][$prop][$lang] = reset($obj)->value;
+                    }
+                }
+            }
+        }
     }
 
     /**
