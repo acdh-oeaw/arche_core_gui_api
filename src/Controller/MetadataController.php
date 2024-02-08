@@ -34,21 +34,20 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $scfg->orderBy = ['^' . $schema->modificationDate];
         $scfg->limit = $count;
         $scfg->metadataMode = 'resource';
-       
+
         $scfg->resourceProperties = [
             $schema->label,
             $schema->modificationDate,
             $schema->creationDate,
             $schema->ontology->description,
             $schema->id
-            
         ];
-        
+
         $properties = [
             $schema->label => 'title',
             $schema->modificationDate => 'modifyDate',
             $schema->creationDate => 'avDate',
-            $schema->ontology->description => 'description', 
+            $schema->ontology->description => 'description',
             $schema->id => 'identifier'
         ];
         $scfg->relativesProperties = [];
@@ -59,7 +58,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         if (count((array) $result) == 0) {
             return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
-
+       
         return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
     }
 
