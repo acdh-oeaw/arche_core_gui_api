@@ -235,6 +235,7 @@ class ArcheCoreHelper {
     public function extractRootView(object $pdoStmt, array $properties, array $propertyLabel, string $lang) {
         $this->resources = [];
         while ($triple = $pdoStmt->fetchObject()) {
+            
             $id = (string) $triple->id;
             $property = $triple->property;
 
@@ -256,6 +257,48 @@ class ArcheCoreHelper {
         return $this->resources;
     }
 
+    
+    public function extractRootDTView(object $pdoStmt, array $properties, array $propertyLabel, string $lang) {
+        $this->resources = [];
+        $i = 0;
+        
+        while ($triple = $pdoStmt->fetchObject()) {
+           
+            if($triple->property === "search://count") {
+                $this->resources['sumcount'] = $triple->value;
+            }
+           
+            $id = (string) $triple->id;
+            $property = $triple->property;
+
+            if (in_array($triple->property, $properties)) {
+                $tLang = (empty($triple->lang)) ? $triple->lang = $lang : $triple->lang;
+                $this->resources[$i]['acdhresId'] = $triple->id;
+                $this->resources[$i][$triple->property][$triple->lang] = $triple;
+                
+            }
+        }
+        $i++;
+        
+        
+        $this->setRootDefaultTitle($lang);
+        
+        
+        foreach($this->resources as $id => $obj) {
+            foreach($obj as $prop => $o) {
+                
+                if(array_key_exists($prop, $propertyLabel)) {
+                    $this->resources[$id][$propertyLabel[$prop]] = $o[$lang];
+                    unset($this->resources[$id][$prop]);
+                }
+            }
+        }
+        
+       
+        return $this->resources;
+    }
+
+    
     /**
      * Generate the breadcrumb data
      * @param object $pdoStmt
@@ -360,20 +403,21 @@ class ArcheCoreHelper {
 
         foreach ($this->resources as $id => $object) {
             foreach ($object as $prop => $obj) {
-
-                if (array_key_exists($lang, $obj)) {
-                    $this->resources[$id][$prop][$lang] = $obj[$lang]->value;
-                } else {
-                    if ($lang === "en" && array_key_exists('de', $obj)) {
-                        $this->resources[$id][$prop][$lang] = $obj['de']->value;
-                        unset($this->resources[$id][$prop]['de']);
-                    } elseif ($lang === "de" && array_key_exists('en', $obj)) {
-                        $this->resources[$id][$prop][$lang] = $obj['en']->value;
-                        unset($this->resources[$id][$prop]['en']);
-                    } elseif (array_key_exists('und', $obj)) {
-                        $this->resources[$id][$prop][$lang] = $obj['und']->value;
+                if (is_array($obj)) {
+                    if (array_key_exists($lang, $obj)) {
+                        $this->resources[$id][$prop][$lang] = $obj[$lang]->value;
                     } else {
-                        $this->resources[$id][$prop][$lang] = reset($obj)->value;
+                        if ($lang === "en" && array_key_exists('de', $obj)) {
+                            $this->resources[$id][$prop][$lang] = $obj['de']->value;
+                            unset($this->resources[$id][$prop]['de']);
+                        } elseif ($lang === "de" && array_key_exists('en', $obj)) {
+                            $this->resources[$id][$prop][$lang] = $obj['en']->value;
+                            unset($this->resources[$id][$prop]['en']);
+                        } elseif (array_key_exists('und', $obj)) {
+                            $this->resources[$id][$prop][$lang] = $obj['und']->value;
+                        } else {
+                            $this->resources[$id][$prop][$lang] = reset($obj)->value;
+                        }
                     }
                 }
             }
@@ -435,55 +479,5 @@ class ArcheCoreHelper {
         }
     }
 
-    //not in use
-    public function extractInverseDataFromCoreApiWithId(object $obj, string $id) {
-        $root = [];
-        $relArr = [];
-
-        while ($triple = $obj->fetchObject()) {
-
-            if ($triple->value === $id) {
-                if ($triple->type === 'REL') {
-
-                    $tobj = new \stdClass();
-                    $tobj->id = $triple->id;
-                    $tobj->type = $triple->type;
-                    $tobj->value = $triple->id;
-                    $tobj->lang = 'en';
-
-                    $data = \acdhOeaw\arche\lib\TripleValue::fromDbRow($tobj);
-
-                    echo "________DATA _____________ ";
-                    echo "<pre>";
-                    var_dump($data);
-                    echo "</pre>";
-
-                    echo "______DATA END ______________";
-                }
-                $root[$triple->id][] = $triple;
-            }
-
-            if ($triple->property === 'search://count') {
-                $root['count'] = $triple->value;
-            }
-        }
-
-        echo "ROOT";
-
-        echo "<pre>";
-        var_dump($root);
-        echo "</pre>";
-
-        die();
-        foreach ($root as $rpk => $rpv) {
-            foreach ($rpv as $rk => $rv) {
-                if (array_key_exists($rk, $relArr)) {
-                    $root[$rpk][$rk]->values = $relArr[$rk];
-                }
-            }
-        }
-
-
-        return $root;
-    }
+    
 }

@@ -26,6 +26,11 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getTopCollections($count, $lang);
     }
+    
+    public function topCollectionsDT(string $lang = "en"): JsonResponse {
+        $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
+        return $controller->getTopCollectionsDT($this->setProps(), $lang);
+    }
 
     public function metadata(string $identifier) {
         //METADATA API

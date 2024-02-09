@@ -37,12 +37,11 @@ arche_core_api_breadcrumb:
     _permission: 'access content'
     _access: 'TRUE'     
         
-arche_core_api_topcollections:    
-  path: '/api/tp/{count}/{lang}'
+arche_core_api_topcollections_dt:    
+  path: '/api/topcollections-dt/{lang}'
   defaults:
-    _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::topCollections'
+    _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::topCollectionsDT'
   requirements:
-    id: '^[^\?]*$'
     lang: '^[^\?]*$'
     _permission: 'access content'
     _access: 'TRUE'         
