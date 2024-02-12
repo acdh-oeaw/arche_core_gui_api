@@ -64,4 +64,33 @@ arche_core_api_child_tree:
         identifier: '^[^\?]*$'
         lang: '^[^\?]*$'
         _permission: 'access content'
+        _access: 'TRUE'
+        
+arche_core_api_coordinates:    
+    path: '/api/search_coordinates/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::searchCoordinates'
+    requirements:
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'    
+        
+arche_core_api_versions_tree:    
+    path: '/api/versions-tree/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::versionsTree'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'           
+        
+arche_core_api_versions_list:    
+    path: '/api/versions-list/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::versionsList'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
         _access: 'TRUE'            

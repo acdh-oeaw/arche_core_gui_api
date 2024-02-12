@@ -20,10 +20,42 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
     }
 
+    public function getSearchCoordinates(string $lang = "en"): JsonResponse {
+        $result = [];
+       
+        $schema = $this->repoDb->getSchema();
+        $scfg = new \acdhOeaw\arche\lib\SearchConfig();
+        //$scfg->orderBy = ['^' . $schema->modificationDate];
+        //$scfg->limit = $count;
+        $scfg->metadataMode = 'resource';
+
+        $scfg->resourceProperties = [
+            $schema->label,
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasLatitude',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasLongitude',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasWKT',
+            $schema->id
+        ];
+
+        $properties = [
+            $schema->label => 'title',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasLatitude' => 'lat',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasLongitude' => 'lon',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasWKT' => 'wkt'
+        ];
+        $scfg->relativesProperties = [];
+        $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(RC::RDF_TYPE, 'https://vocabs.acdh.oeaw.ac.at/schema#Place')], $scfg);
+
+        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
+        $result = $helper->extractRootView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
+        if (count((array) $result) == 0) {
+            return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
+        }
+        
+        return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
+    }
     
     public function getTopCollectionsDT(array $searchProps, string $lang = "en"): JsonResponse {
-        
-        
         
         $result = [];
         $schema = $this->repoDb->getSchema();
@@ -128,64 +160,6 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
 
-        $result[1002] = [
-            'avDate' => '2024-01-25T10:20:40.952086',
-            'title' => 'Die eierlegende Wollmilchsau 2',
-            'description' => 'Test description 2',
-            'identifier' => 'https://id.acdh.oeaw.ac.at/wollmilchsau',
-            'modifyDate' => '2024-02-07T12:30:38.892746'
-        ];
-        $result[1003] = [
-            'avDate' => '2024-01-25T10:20:40.952086',
-            'title' => 'Die eierlegende Wollmilchsau 3',
-            'description' => 'Test description 3',
-            'identifier' => 'https://id.acdh.oeaw.ac.at/wollmilchsau',
-            'modifyDate' => '2024-02-07T12:30:38.892746'
-        ];
-        $result[1004] = [
-            'avDate' => '2024-01-25T10:20:40.952086',
-            'title' => 'Die eierlegende Wollmilchsau 4',
-            'description' => 'Test description 4',
-            'identifier' => 'https://id.acdh.oeaw.ac.at/wollmilchsau',
-            'modifyDate' => '2024-02-07T12:30:38.892746'
-        ];
-        $result[1005] = [
-            'avDate' => '2024-01-25T10:20:40.952086',
-            'title' => 'Die eierlegende Wollmilchsau 5',
-            'description' => 'Test description 5',
-            'identifier' => 'https://id.acdh.oeaw.ac.at/wollmilchsau',
-            'modifyDate' => '2024-02-07T12:30:38.892746'
-        ];
-        $result[1006] = [
-            'avDate' => '2024-01-25T10:20:40.952086',
-            'title' => 'Die eierlegende Wollmilchsau 6',
-            'description' => 'Test description 6',
-            'identifier' => 'https://id.acdh.oeaw.ac.at/wollmilchsau',
-            'modifyDate' => '2024-02-07T12:30:38.892746'
-        ];/*
-        $result[1007] = [
-            'avDate' => '2024-01-25T10:20:40.952086',
-            'title' => 'Die eierlegende Wollmilchsau 7',
-            'description' => 'Test description 7',
-            'identifier' => 'https://id.acdh.oeaw.ac.at/wollmilchsau',
-            'modifyDate' => '2024-02-07T12:30:38.892746'
-        ];
-        $result[1008] = [
-            'avDate' => '2024-01-25T10:20:40.952086',
-            'title' => 'Die eierlegende Wollmilchsau 8',
-            'description' => 'Test description 8',
-            'identifier' => 'https://id.acdh.oeaw.ac.at/wollmilchsau',
-            'modifyDate' => '2024-02-07T12:30:38.892746'
-        ];
-        
-        $result[1009] = [
-            'avDate' => '2024-01-25T10:20:40.952086',
-            'title' => 'Die eierlegende Wollmilchsau 9',
-            'description' => 'Test description 9',
-            'identifier' => 'https://id.acdh.oeaw.ac.at/wollmilchsau',
-            'modifyDate' => '2024-02-07T12:30:38.892746'
-        ];
-       */
         return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
     }
 
@@ -277,4 +251,6 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
         return new JsonResponse(array("data" => $result), 200, ['Content-Type' => 'application/json']);
     }
+    
+    
 }

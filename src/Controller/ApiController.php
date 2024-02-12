@@ -49,10 +49,25 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getExpertData($id, $lang);
     }
+    
+    public function searchCoordinates(string $lang = "en") {
+        $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
+        return $controller->getSearchCoordinates();
+    }
 
     public function breadcrumbData(string $id, string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getBreadcrumb($id, $lang);
+    }
+    
+    public function versionsList(string $identifier, string $lang = "en") {
+        $controller = new \Drupal\arche_core_gui_api\Controller\VersionsController();
+        return $controller->versionsList($identifier, $lang);
+    }
+    
+    public function versionsTree(string $identifier, string $lang = "en") {
+        $controller = new \Drupal\arche_core_gui_api\Controller\VersionsController();
+        return $controller->versionsTree($identifier, $lang);
     }
 
     /**
