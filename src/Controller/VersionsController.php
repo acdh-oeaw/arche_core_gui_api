@@ -57,13 +57,11 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
 
         if (isset($result->newerVersion)) {
-            echo "newest";
             $this->versions = [];
             foreach ($result->newerVersion as $obj) {
                 $this->traverseObject($obj, $this->versions);
             }
         } else {
-            echo "oldest";
             $prevArr = [];
             foreach ($result->prevVersion as $obj) {
                 $this->traverseObject($obj, $prevArr);
@@ -71,42 +69,6 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             $this->versions[0] = array("title" => $result->title[0]->value, 'version' => $result->version[0]->value, 'repoid' => $result->repoid, "children" => $prevArr);
             
         }
-
-
-
-
-
-
-
-        echo "<pre>";
-        var_dump($this->versions);
-        echo "</pre>";
-
-        die();
-
-        //if we have newer content
-        if (count($newerArray) > 0) {
-            //$this->versions = $newerArray;
-            if (count($prevArray) > 0) {
-                echo "itt";
-                $res = $this->findChildByRepoid($prevArray, 11255);
-                echo "<pre>";
-                var_dump($res);
-                echo "</pre>";
-            }
-        } else {
-            $this->versions[0] = array("title" => $result->title[0]->value, 'version' => $result->version[0]->value, 'repoid' => $result->repoid);
-            $this->versions[0]['children'] = $prevArray;
-        }
-
-        echo "<pre>";
-        var_dump($prevArray);
-
-        var_dump($newerArray);
-        var_dump($this->versions);
-        echo "</pre>";
-
-        die();
 
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
         $result = $helper->extractRootView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
