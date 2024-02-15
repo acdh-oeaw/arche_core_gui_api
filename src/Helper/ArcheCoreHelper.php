@@ -279,10 +279,7 @@ class ArcheCoreHelper {
             }
         }
         $i++;
-        
-        
         $this->setRootDefaultTitle($lang);
-        
         
         foreach($this->resources as $id => $obj) {
             foreach($obj as $prop => $o) {
@@ -298,39 +295,6 @@ class ArcheCoreHelper {
         return $this->resources;
     }
 
-    
-    /**
-     * Generate the breadcrumb data
-     * @param object $pdoStmt
-     * @param int $resId
-     * @param array $context
-     * @param string $lang
-     * @return object
-     */
-    public function extractBreadcrumbView(object $pdoStmt, int $resId, array $context, string $lang = "en"): object {
-        $this->resources = [(string) $resId => (object) ['id' => $resId, 'language' => $lang]];
-        while ($triple = $pdoStmt->fetchObject()) {
-            echo "<pre>";
-            var_dump($triple);
-            echo "</pre>";
-
-            $id = (string) $triple->id;
-            if (!isset($context[$triple->property])) {
-                continue;
-            }
-            $property = $context[$triple->property];
-            $this->resources[$id] ??= (object) ['id' => $id];
-            if ($triple->type === 'REL') {
-                $tid = $triple->value;
-                $this->resources[$tid] ??= (object) ['id' => $tid];
-                $this->resources[$id]->$property[] = $this->resources[$tid];
-            } else {
-                $this->resources[$id]->$property[] = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
-            }
-        }
-
-        return $this->resources[(string) $resId];
-    }
 
     /**
      * Get all metadata for a given resource

@@ -192,14 +192,14 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         );
         $result = [];
 
-        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
+        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheBreadcrumbHelper();
         $result = $helper->extractBreadcrumbView($pdoStmt, $id, $context, $lang);
 
         if (count((array) $result) == 0) {
             return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
 
-        return new JsonResponse(array("data" => $result), 200, ['Content-Type' => 'application/json']);
+        return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
     }
 
     public function getExpertData(string $id, string $lang = "en") {
