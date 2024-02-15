@@ -18,28 +18,23 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
     private $newer = [];
     private $versions = [];
     private $resId;
+    private $reverseArr = [];
 
     public function __construct() {
         parent::__construct();
         $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
     }
 
-    public function reverseArrayFromDeepestChild($array) {
-        // If the array doesn't have children, return it as is
-        if (!isset($array['children']) || empty($array['children'])) {
-            return $array;
+    private function fetchChildElements($array) {
+        foreach ($array as $element) {
+            if (isset($element->id)) {
+                $this->reverseArr[] = $element;
+                // Recursively rebuild children first
+                if (isset($element->newerVersion)) {
+                    $this->fetchChildElements($element->newerVersion);
+                }
+            }
         }
-
-        // Recursively call the function for each child
-        $reversedChildren = array_map(array($this, 'reverseArrayFromDeepestChild'), $array['children']);
-
-        // Find the deepest child element
-        $deepestChild = end($reversedChildren);
-
-        // Reverse the order of the children array
-        $array['children'] = array_reverse($reversedChildren);
-
-        return $deepestChild;
     }
 
     public function versionsList(string $id, string $lang = "en") {
@@ -58,78 +53,40 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
         $result = $this->getVersions($id, $schema->isNewVersionOf, $context);
 
-        if (isset($result->newerVersion)) {
-
-            $newer = [];
-            $older = [];
-            $first = array(
-                'id' => $result->repoid,
-                'uri' => $result->repoid,
-                'uri_dl' => $this->repoDb->getBaseUrl() . $result->repoid,
-                'filename' => $avDate . ' - ' . $result->version[0]->value,
-                'resShortId' => $result->repoid,
-                'title' => $result->title[0]->value,
-                'text' => $result->title[0]->value,
-                'userAllowedToDL' => false,
-                'dir' => false,
-                'marked' => $marked,
-                'encodedUri' => $this->repoDb->getBaseUrl() . $result->repoid,
-                'repoid' => $result->repoid,
-                'version' => $result->version[0]->value,
-                'avDate' => $avDate,
-                "children" => $prevArr);
-            
-            foreach ($result->newerVersion as $obj) {
-                $this->traverseObject($obj, $newer, 'newerVersion');
+        //if we have newer version then we have to fetch the first parent and regenerate the tree again
+        if ($result->newerVersion) {
+            $this->fetchChildElements($result->newerVersion);
+            $first = end($this->reverseArr);
+            if (isset($first->repoid)) {
+                $result = $this->getVersions($first->repoid, $schema->isNewVersionOf, $context);
             }
-            
-            foreach ($result->prevVersion as $obj) {
-                $this->traverseObject($obj, $older, 'prevVersion');
-            }
-            
-            foreach($newer as $n) {
-                $reversedArray[] = $this->reverseArrayFromDeepestChild($n);
-            }
-            
-            echo "<pre>";
-            echo "first:";
-            var_dump($reversedArray);
-            echo "NEWER";
-            var_dump($newer);
-            echo "OLDER:";
-            var_dump($older);
-            echo "</pre>";
-
-            die();
-        } else {
-            $prevArr = [];
-            $marked = false;
-            foreach ($result->prevVersion as $obj) {
-                $this->traverseObject($obj, $prevArr);
-            }
-            $avDate = $this->formatAvDate($result->avDate[0]->value);
-            if ((string) $result->id === (string) $this->resId) {
-                $marked = true;
-            }
-            $this->versions[0] = array(
-                'id' => $result->repoid,
-                'uri' => $result->repoid,
-                'uri_dl' => $this->repoDb->getBaseUrl() . $result->repoid,
-                'filename' => $avDate . ' - ' . $result->version[0]->value,
-                'resShortId' => $result->repoid,
-                'title' => $result->title[0]->value,
-                'text' => $result->title[0]->value,
-                'userAllowedToDL' => false,
-                'dir' => false,
-                'marked' => $marked,
-                'encodedUri' => $this->repoDb->getBaseUrl() . $result->repoid,
-                'repoid' => $result->repoid,
-                'version' => $result->version[0]->value,
-                'avDate' => $avDate,
-                "children" => $prevArr);
         }
 
-
+        $prevArr = [];
+        $marked = false;
+        foreach ($result->prevVersion as $obj) {
+            $this->traverseObject($obj, $prevArr, 'prevVersion');
+        }
+        $avDate = $this->formatAvDate($result->avDate[0]->value);
+        if ((string) $result->id === (string) $this->resId) {
+            $marked = true;
+        }
+        $this->versions[0] = array(
+            'id' => $result->repoid,
+            'uri' => $result->repoid,
+            'uri_dl' => $this->repoDb->getBaseUrl() . $result->repoid,
+            'filename' => $avDate . ' - ' . $result->version[0]->value,
+            'resShortId' => $result->repoid,
+            'title' => $result->title[0]->value.' - '.$result->version[0]->value,
+            'text' => $result->title[0]->value.' - '.$result->version[0]->value,
+            'userAllowedToDL' => false,
+            'dir' => false,
+            'marked' => $marked,
+            'encodedUri' => $this->repoDb->getBaseUrl() . $result->repoid,
+            'repoid' => $result->repoid,
+            'version' => $result->version[0]->value,
+            'avDate' => $avDate,
+            "children" => $prevArr);
 
         if (count((array) $this->versions) == 0) {
             return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
@@ -143,32 +100,9 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         return $date->format('Y-m-d');
     }
 
-    private function findChildByRepoid($array, $repoid) {
-        // Loop through each element of the array
-        foreach ($array as $element) {
-            // Check if the current element's repoid matches the desired repoid
-            if ($element['repoid'] == $repoid) {
-                // If found, return the current element
-                return $element;
-            }
-
-            // If the current element has children, recursively search within its children
-            if (!empty($element['children'])) {
-                $result = $this->findChildByRepoid($element['children'], $repoid);
-                // If a match is found within the children, return the result
-                if ($result !== null) {
-                    return $result;
-                }
-            }
-        }
-
-        // If no match is found, return null
-        return null;
-    }
-
     private function traverseObject($io, &$outputArray, $versionDirection) {
 
-        // Extract title and repoid from the current object
+// Extract title and repoid from the current object
         $title = $io->title[0]->value;
         $version = $io->version[0]->value;
         $marked = false;
@@ -182,7 +116,7 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         if ((string) $io->repoid === (string) $this->resId) {
             $marked = true;
         }
-        // Create a new array with title and repoid
+// Create a new array with title and repoid
         $newItem = array(
             'id' => $io->repoid,
             'uri' => $io->repoid,
@@ -190,7 +124,7 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             'filename' => $avDate . ' - ' . $version,
             'resShortId' => $io->repoid,
             'title' => $title,
-            'text' => $title,
+            'text' => $title. ' - ' . $version,
             'userAllowedToDL' => false,
             'dir' => false,
             'marked' => $marked,
@@ -200,7 +134,7 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             'avDate' => $avDate
         );
 
-        // If the current object has a 'prevVersion' property and it's not empty
+// If the current object has a 'prevVersion' property and it's not empty
         if (isset($io->{$versionDirection}) && !empty($io->{$versionDirection})) {
             if (count($io->prevVersion) > 0) {
                 foreach ($io->{$versionDirection} as $prev) {
@@ -209,7 +143,7 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             }
         }
 
-        // Append the new item to the output array
+// Append the new item to the output array
         $outputArray[] = $newItem;
     }
 
@@ -234,7 +168,7 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
             $property = $context[$triple->property];
             if ($property === 'prevVersion') {
-                //$previd = $triple->value;
+//$previd = $triple->value;
 
                 $tree[$triple->value] ??= new \stdClass();
                 $tree[$id]->{$property}[] = $tree[$triple->value];
