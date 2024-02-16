@@ -93,4 +93,15 @@ arche_core_api_versions_list:
         identifier: '^[^\?]*$'
         lang: '^[^\?]*$'
         _permission: 'access content'
-        _access: 'TRUE'            
+        _access: 'TRUE'         
+        
+arche_core_api_rpr_table:    
+    path: '/api/rprDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::rprDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'         
+    

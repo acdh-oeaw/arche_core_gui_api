@@ -19,7 +19,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         parent::__construct();
         $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
     }
-
+    
     /**
      * Child Datatable api
      * @param string $id

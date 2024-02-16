@@ -81,6 +81,11 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getChildData($identifier, $this->setProps(), $lang);
     }
     
+    public function rprDT(string $identifier, string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
+        return $controller->getRprDT($identifier, $this->setProps(), $lang);
+    }
+    
     /**
      * The Child tree view api endpoint
      * @param string $identifier

@@ -22,7 +22,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
     public function getSearchCoordinates(string $lang = "en"): JsonResponse {
         $result = [];
-       
+
         $schema = $this->repoDb->getSchema();
         $scfg = new \acdhOeaw\arche\lib\SearchConfig();
         //$scfg->orderBy = ['^' . $schema->modificationDate];
@@ -51,12 +51,12 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         if (count((array) $result) == 0) {
             return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
-        
+
         return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
     }
-    
+
     public function getTopCollectionsDT(array $searchProps, string $lang = "en"): JsonResponse {
-        
+
         $result = [];
         $schema = $this->repoDb->getSchema();
         $scfg = new \acdhOeaw\arche\lib\SearchConfig();
@@ -92,14 +92,14 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
         $result = $helper->extractRootDTView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
-        
+
         if (count((array) $result) == 0) {
             return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
-        
+
         $sumcount = $result['sumcount'];
         unset($result['sumcount']);
-       
+
         $response = new JsonResponse();
         $response->setContent(
                 json_encode(
@@ -118,9 +118,8 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
-        
     }
-    
+
     /**
      * Provide the top collections, based on the count value
      *
@@ -251,6 +250,5 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
         return new JsonResponse(array("data" => $result), 200, ['Content-Type' => 'application/json']);
     }
-    
-    
+
 }
