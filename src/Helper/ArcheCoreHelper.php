@@ -169,7 +169,7 @@ class ArcheCoreHelper {
         $v->a_attr = array("href" => str_replace('api/', 'browser/metadata/', $baseUrl . $v->id));
     }
 
-    private function setTripleValueTitle(array $triple, string $lang): string {
+    protected function setTripleValueTitle(array $triple, string $lang): string {
 
         foreach ($triple as $obj) {
             if (isset($obj->value)) {
@@ -363,7 +363,7 @@ class ArcheCoreHelper {
      * this is for the single objects, where we dont have multiple value
      * @param string $lang
      */
-    private function setRootDefaultTitle(string $lang) {
+    protected function setRootDefaultTitle(string $lang) {
 
         foreach ($this->resources as $id => $object) {
             foreach ($object as $prop => $obj) {

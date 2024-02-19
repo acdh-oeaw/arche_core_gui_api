@@ -50,7 +50,6 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $searchCfg->relativesProperties = array_keys($relContext);
         }
 
-
         $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm($properties, $res->getUri(), type: \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION);
         if (!empty($searchPhrase)) {
             $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm(array_keys($resContext), $searchPhrase, '~');
@@ -63,16 +62,14 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $context[$schema->searchOrderValue . '1'] = 'searchValue';
         $totalCount = null;
         
-        
         while ($triple = $pdoStmt->fetchObject()) {
-
             $triple->value ??= '';
             $id = (string) $triple->id;
             $shortProperty = $context[$triple->property] ?? false;
             $property = $shortProperty ?: $triple->property;
 
             $resources[$id] ??= (object) ['id' => $id];
-
+          
             if ($triple->type === 'REL') {
                 if ($triple->value === $resId && ($properties === null || in_array($triple->property, $properties))) {
                     $relations[] = (object) [
@@ -97,12 +94,18 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 $totalCount = $triple->value;
             }
         }
-
         $order = array_map(fn($x) => $x->resource->searchOrder[0]->value, $relations);
         array_multisort($order, $relations);
         return [$relations, $totalCount];
     }
 
+    /**
+     * Get Related Collections and Resources
+     * @param string $id
+     * @param array $searchProps
+     * @param string $lang
+     * @return Response
+     */
     public function getRprDT(string $id, array $searchProps, string $lang): Response {
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
@@ -124,15 +127,17 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $scfg->orderByLang = $lang;
 
         $property = [
+            /*
             'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
-            'https://vocabs.acdh.oeaw.ac.at/schema#isContinuedBy',
-            'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy',
             'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
             'https://vocabs.acdh.oeaw.ac.at/schema#hasDerivedPublication',
             $schema->dissService->parent,
+            */
+            'https://vocabs.acdh.oeaw.ac.at/schema#relation',
             'https://vocabs.acdh.oeaw.ac.at/schema#continues',
+            'https://vocabs.acdh.oeaw.ac.at/schema#isContinuedBy',
             'https://vocabs.acdh.oeaw.ac.at/schema#documents',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasSource'
+            'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy'
         ];
 
         $resContext = [
@@ -152,17 +157,8 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
         list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $scfg, $property, $searchPhrase);
 
-        
-        echo "<pre>";
-        var_dump($result);
-        echo "</pre>";
-
-        die();
-        
-        //$helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        //$result = $helper->extractChildView($result, ['id', 'title', 'class', 'avDate', 'rdftype'], $totalCount, $this->repoDb->getBaseUrl(), $lang);
-       
-        
+        $helper = new \Drupal\arche_core_gui_api\Helper\InverseTableHelper();
+        $result = $helper->extractinverseTableView($result, $lang);
         
         if (count((array) $result) == 0) {
             return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
@@ -173,30 +169,89 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 json_encode(
                         array(
                             "aaData" => (array) $result,
-                            "iTotalRecords" => (string) $result[0]['sumcount'],
-                            "iTotalDisplayRecords" => (string) $result[0]['sumcount'],
+                            "iTotalRecords" => (string) $totalCount,
+                            "iTotalDisplayRecords" => (string) $totalCount,
                             "draw" => intval($searchProps['draw']),
                             "cols" => array_keys((array) $result[0]),
                             "order" => 'asc',
-                            "orderby" => 1,
-                            "childTitle" => "title",
-                            "rootType" => "https://vocabs.acdh.oeaw.ac.at/schema#TopCollection"
+                            "orderby" => 1
                         )
                 )
         );
         $response->headers->set('Content-Type', 'application/json');
-
         return $response;
-
-        /*
-         *    
-
-
-         */
     }
     
     
-    private function extractDTValues() {
+    public function getPublicationsDT(string $id, array $searchProps, string $lang): Response {
+        $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
+
+        if (empty($id)) {
+            return new JsonResponse(array("Please provide an id"), 404, ['Content-Type' => 'application/json']);
+        }
+
+        $result = [];
+        $schema = $this->repoDb->getSchema();
+        $scfg = new \acdhOeaw\arche\lib\SearchConfig();
+        $scfg->metadataMode = 'resource';
+        $scfg->offset = $searchProps['offset'];
+        $scfg->limit = $searchProps['limit'];
+        $orderby = "";
+        if ($searchProps['order'] === 'desc') {
+            $orderby = '^';
+        }
+        $scfg->orderBy = [$orderby . $schema->label];
+        $scfg->orderByLang = $lang;
+
+        $property = [
+            'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasDerivedPublication',
+            'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasSource',
+            'https://vocabs.acdh.oeaw.ac.at/schema#documents',
+            'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy'
+        ];
+
+        $resContext = [
+            $schema->label => 'title',
+            \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
+            'https://vocabs.acdh.oeaw.ac.at/schema#hasCustomCitation' => 'customCitation',
+            $schema->id => 'identifier',
+            $schema->accessRestriction => 'accessRestriction'
+        ];
+
+        $relContext = [
+            (string) $schema->label => 'title',
+        ];
+
+        $searchPhrase = (isset($searchProps['search'])) ? $searchProps['search'] : "" ;
+        $t = microtime(true);
+
+        list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $scfg, $property, $searchPhrase);
+
+        $helper = new \Drupal\arche_core_gui_api\Helper\InverseTableHelper();
+        $result = $helper->extractinverseTableView($result, $lang);
         
+        if (count((array) $result) == 0) {
+            return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
+        }
+
+        $response = new Response();
+        $response->setContent(
+                json_encode(
+                        array(
+                            "aaData" => (array) $result,
+                            "iTotalRecords" => (string) $totalCount,
+                            "iTotalDisplayRecords" => (string) $totalCount,
+                            "draw" => intval($searchProps['draw']),
+                            "cols" => array_keys((array) $result[0]),
+                            "order" => 'asc',
+                            "orderby" => 1
+                        )
+                )
+        );
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
+    
 }
