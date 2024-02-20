@@ -114,4 +114,22 @@ arche_core_api_publications_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'            
-    
+
+arche_core_api_smart_search:    
+    path: '/api/smartsearch'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::smartSearch'
+    requirements:
+        uri: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'      
+        
+
+arche_core_api_search_date_facets:    
+    path: '/api/smartSearchDateFacet'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::smartSearchDateFacets'
+    requirements:
+        uri: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'              

@@ -91,6 +91,18 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getPublicationsDT($identifier, $this->setProps(), $lang);
     }
     
+    public function smartSearch(): Response
+    {
+        $controller = new \Drupal\arche_core_gui_api\Controller\SmartSearchController();
+        return $controller->search($_GET);
+    }
+    
+    public function smartSearchDateFacets(): Response
+    {
+        $controller = new \Drupal\arche_core_gui_api\Controller\SearchBlock\SearchBlockController();
+        return $controller->dateFacets();
+    }
+    
     
     /**
      * The Child tree view api endpoint
