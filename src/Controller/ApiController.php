@@ -99,7 +99,7 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
     
     public function smartSearchDateFacets(): Response
     {
-        $controller = new \Drupal\arche_core_gui_api\Controller\SearchBlock\SearchBlockController();
+        $controller = new \Drupal\arche_core_gui_api\Controller\SearchBlockController();
         return $controller->dateFacets();
     }
     

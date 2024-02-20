@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\arche_core_gui_api\Controller\SmartSearch;
+namespace Drupal\arche_core_gui_api\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
