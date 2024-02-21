@@ -61,7 +61,6 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         }
         $searchCfg->orderBy = [$orderby . $schema->label];
         $searchCfg->orderByLang = $lang;
-        //$searchPhrase = '170308';
         $searchPhrase = '';
         $t = microtime(true);
 

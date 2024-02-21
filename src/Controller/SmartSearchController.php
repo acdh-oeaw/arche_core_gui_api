@@ -129,8 +129,6 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
                 $facet->end = is_array($facet->end) ? $facet->end : [$facet->end];
             }
             
-            
-            
             unset($facet);
             $dateFacets = array_filter((array) $dateFacets, fn($x) => $x->distribution);
             $spatialSearchTerm = null;
@@ -149,7 +147,6 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
                 }
             }
             
-            //model !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             $pdo = new \PDO('pgsql: host=127.0.0.1 dbname=www-data user=gui password=' . $pswd);
             // Put everything together
             $search = new \acdhOeaw\arche\lib\SmartSearch($pdo, $this->schema, $baseUrl);
