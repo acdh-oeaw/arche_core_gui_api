@@ -10,22 +10,24 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * @author nczirjak
  */
-class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
+class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseController {
 
-    private $config;
+    private $aConfig;
     private $sConfig;
     private $context = [];
     private $schema;
 
     public function __construct() {
-        $this->config = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
+        parent::__construct();
+        $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
     }
 
     private function setContext() {
         $this->context = [
             $this->schema->label => 'title',
-            $this->config->schema->namespaces->rdfs . 'type' => 'class',
+            $this->aConfig->schema->namespaces->rdfs . 'type' => 'class',
             $this->schema->modificationDate => 'availableDate',
+            $this->schema->ontology->description => 'description',
             $this->schema->searchFts => 'matchHiglight',
             $this->schema->searchMatch => 'matchProperty',
             $this->schema->searchWeight => 'matchWeight',
@@ -35,14 +37,15 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
     }
 
     public function search(array $post): Response {
-
         error_log(print_r($post, true));
         $postParams = $post;
+       
+      
         
         try {
-            $this->sConfig = $this->config->smartSearch;
-            $this->schema = new \acdhOeaw\arche\lib\Schema($this->config->schema);
-            $baseUrl = $this->config->rest->urlBase . $this->config->rest->pathBase;
+            $this->sConfig = $this->aConfig->smartSearch;
+            $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
+            $baseUrl = $this->aConfig->rest->urlBase . $this->aConfig->rest->pathBase;
 
             $this->setContext();
             // context needed to display search results
@@ -76,7 +79,6 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
                 }
                 $namedEntityWeightDefault = 0.0;
             }
-
             $searchTerms = [];
 
             foreach ($this->sConfig->facets as $facet) {
@@ -98,7 +100,6 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
                     }
                 }
             }
-
             
             $facets = $this->sConfig->facets;
             $dateFacets = $this->sConfig->dateFacets;
@@ -146,10 +147,12 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
                     }
                 }
             }
-            
-            $pdo = new \PDO('pgsql: host=127.0.0.1 dbname=www-data user=gui password=' . $pswd);
+           
+            //$pdo = new \PDO('pgsql: host=127.0.0.1 dbname=www-data user=gui password=' . $pswd);
             // Put everything together
-            $search = new \acdhOeaw\arche\lib\SmartSearch($pdo, $this->schema, $baseUrl);
+            //$search = new \acdhOeaw\arche\lib\SmartSearch($pdo, $this->schema, $baseUrl);
+            
+            $search = $this->repoDb->getSmartSearch();
             $search->setPropertyWeights((array) $this->sConfig->property->weights);
             $search->setWeightedFacets($facets);
             $search->setRangeFacets($dateFacets);
@@ -181,10 +184,13 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
             $cfg->metadataParentProperty = $this->schema->parent;
             $cfg->resourceProperties = array_keys($this->context);
             $cfg->relativesProperties = array_keys($relContext);
+           
             $triplesIterator = $search->getSearchPage($page, $resourcesPerPage, $cfg);
+            
             // parse triples into objects as ordinary
             $resources = [];
             $totalCount = 0;
+          
             foreach ($triplesIterator as $triple) {
                 if ($triple->property === $this->schema->searchCount) {
                     $totalCount = (int) $triple->value;
@@ -209,7 +215,7 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
             $resources = array_filter($resources, fn($x) => isset($x->matchOrder));
             $order = array_map(fn($x) => (int) $x->matchOrder[0], $resources);
             array_multisort($order, $resources);
-            
+              
         
             foreach ($resources as $i) {
                 $i->url = $baseUrl . $i->id;
@@ -243,6 +249,11 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
                         'pageSize' => $resourcesPerPage,
                                     ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
+            echo "<pre>";
+            var_dump($e->getMessage());
+            echo "</pre>";
+
+            die();
             return new Response(array("Error in search! " . $e->getMessage()), 404, ['Content-Type' => 'application/json']);
         }
 
@@ -255,7 +266,7 @@ class SmartSearchController extends \Drupal\Core\Controller\ControllerBase {
 
     public function dateFacets(): Response {
         try {
-            return new Response(json_encode($this->config->smartSearch->dateFacets));
+            return new Response(json_encode($this->aConfig->smartSearch->dateFacets));
         } catch (Throwable $e) {
             return new Response(array(), 404, ['Content-Type' => 'application/json']);
         }
