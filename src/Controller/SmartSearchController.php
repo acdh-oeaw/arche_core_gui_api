@@ -39,8 +39,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     public function search(array $post): Response {
         error_log(print_r($post, true));
         $postParams = $post;
-       
-      
         
         try {
             $this->sConfig = $this->aConfig->smartSearch;
@@ -249,15 +247,9 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'pageSize' => $resourcesPerPage,
                                     ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
-            echo "<pre>";
-            var_dump($e->getMessage());
-            echo "</pre>";
-
-            die();
             return new Response(array("Error in search! " . $e->getMessage()), 404, ['Content-Type' => 'application/json']);
         }
 
-     
         if ($object === false) {
             return new Response(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
