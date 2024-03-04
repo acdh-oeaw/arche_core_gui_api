@@ -135,21 +135,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacets['bbox'], operator: '&&');
             }
 
-            $pswd = "";
-            if (file_exists("/home/www-data/.pgpass")) {
-                foreach (explode("\n", file_get_contents("/home/www-data/.pgpass")) as $i) {
-                    $i = explode(':', $i);
-                    if (isset($i[3]) && $i[3] == 'gui' && isset($i[4])) {
-                        $pswd = $i[4];
-                        break;
-                    }
-                }
-            }
-           
-            //$pdo = new \PDO('pgsql: host=127.0.0.1 dbname=www-data user=gui password=' . $pswd);
-            // Put everything together
-            //$search = new \acdhOeaw\arche\lib\SmartSearch($pdo, $this->schema, $baseUrl);
-            
             $search = $this->repoDb->getSmartSearch();
             $search->setPropertyWeights((array) $this->sConfig->property->weights);
             $search->setWeightedFacets($facets);
@@ -182,7 +167,9 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $cfg->metadataParentProperty = $this->schema->parent;
             $cfg->resourceProperties = array_keys($this->context);
             $cfg->relativesProperties = array_keys($relContext);
-           
+            //$cfg->orderBy = ['^' . $this->schema->title];
+            //$scfg->limit = $count;
+            
             $triplesIterator = $search->getSearchPage($page, $resourcesPerPage, $cfg);
             
             // parse triples into objects as ordinary
