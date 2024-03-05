@@ -5,6 +5,7 @@ namespace Drupal\arche_core_gui_api\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Component\Utility\Xss;
+use Drupal\Core\Session\AccountInterface;
 
 class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseController {
 
@@ -26,7 +27,7 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getTopCollections($count, $lang);
     }
-    
+
     public function topCollectionsDT(string $lang = "en"): JsonResponse {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getTopCollectionsDT($this->setProps(), $lang);
@@ -49,7 +50,7 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getExpertData($id, $lang);
     }
-    
+
     public function searchCoordinates(string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getSearchCoordinates();
@@ -59,12 +60,12 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getBreadcrumb($id, $lang);
     }
-    
+
     public function versionsList(string $identifier, string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\VersionsController();
         return $controller->versionsList($identifier, $lang);
     }
-    
+
     public function versionsTree(string $identifier, string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\VersionsController();
         return $controller->versionsTree($identifier, $lang);
@@ -80,30 +81,27 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\ChildController();
         return $controller->getChildData($identifier, $this->setProps(), $lang);
     }
-    
+
     public function rprDT(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
         return $controller->getRprDT($identifier, $this->setProps(), $lang);
     }
-    
+
     public function publicationsDT(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
         return $controller->getPublicationsDT($identifier, $this->setProps(), $lang);
     }
-    
-    public function smartSearch(): Response
-    {
+
+    public function smartSearch(): Response {
         $controller = new \Drupal\arche_core_gui_api\Controller\SmartSearchController();
         return $controller->search($_GET);
     }
-    
-    public function smartSearchDateFacets(): Response
-    {
+
+    public function smartSearchDateFacets(): Response {
         $controller = new \Drupal\arche_core_gui_api\Controller\SearchBlockController();
         return $controller->dateFacets();
     }
-    
-    
+
     /**
      * The Child tree view api endpoint
      * @param string $identifier
@@ -115,4 +113,35 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getChildTreeData($identifier, $this->setProps(), $lang);
     }
 
+    /**
+     * Change language session variable API
+     * Because of the special path handling, the basic language selector is not working
+     *
+     * @param string $lng
+     * @return Response
+     */
+    public function archeChangeLanguage(string $lng = 'en'): Response {
+        
+        $current_user = \Drupal::currentUser();
+        /*
+          $language_manager = \Drupal::languageManager();
+          $language_manager->getCurrentLanguage()->getId();
+          $en = $language_manager->getLanguage('en');
+          $de = $language_manager->getLanguage('de');
+
+          $language_manager->reset();
+         * $language_manager->setConfigOverrideLanguage($de);
+         * \Drupal::languageManager()->getCurrentLanguage()->getId();
+          error_log('itt'); */
+
+        if ($current_user->isAnonymous()) {
+            $_SESSION['language'] = strtolower($lng);
+        } else {
+            $_SESSION['_sf2_attributes']['language'] = strtolower($lng);
+        }
+        $response = new Response();
+        $response->setContent(json_encode("language changed to: " . $lng));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
 }

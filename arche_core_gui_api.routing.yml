@@ -133,3 +133,11 @@ arche_core_api_search_date_facets:
         uri: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'              
+        
+        
+arche_change_lng:    
+    path: '/api/change_lng/{lng}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::archeChangeLanguage'
+    requirements:
+        _access: 'TRUE'        
