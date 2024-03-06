@@ -170,7 +170,10 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             //$cfg->orderBy = ['^' . $this->schema->title];
             //$scfg->limit = $count;
             
-            $triplesIterator = $search->getSearchPage($page, $resourcesPerPage, $cfg);
+             $search->setFallbackOrderBy($this->schema->label, true); 
+            $triplesIterator = $search->getSearchPage($page, $resourcesPerPage, $cfg, $preferredLang);
+            
+          
             
             // parse triples into objects as ordinary
             $resources = [];
@@ -197,10 +200,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 }
             }
 
+           
             $resources = array_filter($resources, fn($x) => isset($x->matchOrder));
             $order = array_map(fn($x) => (int) $x->matchOrder[0], $resources);
             array_multisort($order, $resources);
-              
+        
         
             foreach ($resources as $i) {
                 $i->url = $baseUrl . $i->id;
@@ -225,6 +229,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                     unset($i->$p);
                 }
             }
+            
+           
 
             return new Response(json_encode([
                         'facets' => $facets,
@@ -234,6 +240,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'pageSize' => $resourcesPerPage,
                                     ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
+            
             return new Response(array("Error in search! " . $e->getMessage()), 404, ['Content-Type' => 'application/json']);
         }
 
