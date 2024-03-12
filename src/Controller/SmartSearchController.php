@@ -23,34 +23,37 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     private function setContext() {
+        
+     
         $this->context = [
-            $this->schema->label => 'title',
-            $this->aConfig->schema->namespaces->rdfs . 'type' => 'class',
-            $this->schema->modificationDate => 'availableDate',
-            $this->schema->ontology->description => 'description',
-            $this->schema->searchFts => 'matchHiglight',
-            $this->schema->searchMatch => 'matchProperty',
-            $this->schema->searchWeight => 'matchWeight',
-            $this->schema->searchOrder => 'matchOrder',
-            $this->schema->parent => 'parent',
+            (string)$this->schema->label => 'title',
+            (string)$this->schema->namespaces->rdfs . 'type' => 'class',
+            (string)$this->schema->modificationDate => 'availableDate',
+            (string)$this->schema->ontology->description => 'description',
+            (string)$this->schema->searchFts => 'matchHiglight',
+            (string)$this->schema->searchMatch => 'matchProperty',
+            (string)$this->schema->searchWeight => 'matchWeight',
+            (string)$this->schema->searchOrder => 'matchOrder',
+            (string)$this->schema->parent => 'parent',
         ];
     }
 
     public function search(array $post): Response {
         error_log(print_r($post, true));
         $postParams = $post;
-        
+       
+            
         try {
             $this->sConfig = $this->aConfig->smartSearch;
             $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
             $baseUrl = $this->aConfig->rest->urlBase . $this->aConfig->rest->pathBase;
-
+           
             $this->setContext();
             // context needed to display search results
 
             $relContext = [
-                $this->schema->label => 'title',
-                $this->schema->parent => 'parent',
+                (string)$this->schema->label => 'title',
+               (string) $this->schema->parent => 'parent',
             ];
    
             // SEARCH CONFIG
@@ -78,7 +81,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 $namedEntityWeightDefault = 0.0;
             }
             $searchTerms = [];
-
+  
             foreach ($this->sConfig->facets as $facet) {
                 $fid = $facet->property;
                 if (is_array($reqFacets[$fid] ?? null)) {
@@ -143,7 +146,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $search->setNamedEntityFilter($namedEntityClasses);
            
             $search->search($searchPhrase, $preferredLang, $searchInBinaries, $allowedProperties, $searchTerms, $spatialSearchTerm, $postParams['searchIn'] ?? []);
-
+            
             // display distribution of defined facets
             $facetLabels = array_combine(
                     array_map(fn($x) => $x->property, $this->sConfig->facets),
@@ -174,12 +177,12 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $triplesIterator = $search->getSearchPage($page, $resourcesPerPage, $cfg, $preferredLang);
             
           
-            
             // parse triples into objects as ordinary
             $resources = [];
             $totalCount = 0;
           
             foreach ($triplesIterator as $triple) {
+               
                 if ($triple->property === $this->schema->searchCount) {
                     $totalCount = (int) $triple->value;
                     continue;
@@ -229,8 +232,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                     unset($i->$p);
                 }
             }
-            
-           
 
             return new Response(json_encode([
                         'facets' => $facets,
@@ -241,11 +242,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                                     ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
             
-            return new Response(array("Error in search! " . $e->getMessage()), 404, ['Content-Type' => 'application/json']);
+            return new Response("Error in search! " . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
         }
 
         if ($object === false) {
-            return new Response(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
+            return new Response("There is no resource", 404, ['Content-Type' => 'application/json']);
         }
         return new Response(json_encode($result));
     }
@@ -254,7 +255,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         try {
             return new Response(json_encode($this->aConfig->smartSearch->dateFacets));
         } catch (Throwable $e) {
-            return new Response(array(), 404, ['Content-Type' => 'application/json']);
+            return new Response("", 404, ['Content-Type' => 'application/json']);
         }
     }
 
