@@ -145,7 +145,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $search->setNamedEntityWeights($namedEntityWeights, $namedEntityWeightDefault);
             $search->setNamedEntityFilter($namedEntityClasses);
            
-            $search->search($searchPhrase, $preferredLang, $searchInBinaries, $allowedProperties, $searchTerms, $spatialSearchTerm, $postParams['searchIn'] ?? []);
+            $search->search($searchPhrase, $preferredLang, $searchInBinaries, $allowedProperties, $searchTerms, $spatialSearchTerm, $postParams['searchIn'] ?? [], $this->sConfig->matchesLimit);
             
             // display distribution of defined facets
             $facetLabels = array_combine(
@@ -239,6 +239,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'totalCount' => $totalCount,
                         'page' => $page,
                         'pageSize' => $resourcesPerPage,
+                        'maxCount' => $this->sConfig->matchesLimit
                                     ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
             
