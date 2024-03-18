@@ -37,12 +37,43 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             (string)$this->schema->parent => 'parent',
         ];
     }
-
-    public function search(array $post): Response {
-        error_log(print_r($post, true));
-        $postParams = $post;
+    
+    private function initialSearch(array $postParams): Response {
        
-            
+        try {
+            $this->sConfig = $this->aConfig->smartSearch;
+            $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
+            $baseUrl = $this->aConfig->rest->urlBase . $this->aConfig->rest->pathBase;
+            $search = $this->repoDb->getSmartSearch();
+            $search->setWeightedFacets((array)$this->sConfig->facets);
+            $search->setRangeFacets((array) $this->sConfig->dateFacets);
+            $prefLang = $postParams['preferredLang'] ?? $this->sConfig->prefLang ?? 'en';
+    
+            return new Response(json_encode([
+                        'facets' => $search->getInitialFacets($prefLang, $this->sConfig->facetsCache, false),
+                        'results' => [],
+                        'totalCount' => -1,
+                        'page' => 0,
+                        'pageSize' => 0,
+                        'maxCount' => -1
+                                    ], \JSON_UNESCAPED_SLASHES));
+        } catch (\Throwable $e) {
+            return new Response("Error in search! " . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
+        }
+
+        if ($object === false) {
+            return new Response("There is no resource", 404, ['Content-Type' => 'application/json']);
+        }
+        return new Response(json_encode($result));
+    }
+    
+    public function search(array $postParams): Response {
+        error_log("SEARCH API backend:::::");
+        error_log(print_r($postParams, true));
+        
+        if(isset($postParams['initialFacets'])) {
+            return $this->initialSearch($postParams);
+        }
         try {
             $this->sConfig = $this->aConfig->smartSearch;
             $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
