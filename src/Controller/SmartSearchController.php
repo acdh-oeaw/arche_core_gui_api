@@ -23,8 +23,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     private function setContext() {
-        
-     
         $this->context = [
             (string)$this->schema->label => 'title',
             (string)$this->schema->namespaces->rdfs . 'type' => 'class',
@@ -71,6 +69,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         error_log("SEARCH API backend:::::");
         error_log(print_r($postParams, true));
         
+        
         if(isset($postParams['initialFacets'])) {
             return $this->initialSearch($postParams);
         }
@@ -102,17 +101,21 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
             $reqFacets = $postParams['facets'] ?? [];
             $allowedProperties = $reqFacets['property'] ?? [];
+              
             if (is_array($reqFacets['linkProperty'] ?? false)) {
+                
+                
                 foreach ($reqFacets['linkProperty'] as $i) {
-                    $namedEntityWeights[$i] ??= 1.0;
+                    $namedEntityWeights[(string)$i] ??= 1.0;
                 }
+               
                 foreach (array_diff(array_keys($namedEntityWeights), $reqFacets['linkProperty']) as $i) {
-                    unset($namedEntityWeights[$i]);
+                    unset($namedEntityWeights[(string)$i]);
                 }
                 $namedEntityWeightDefault = 0.0;
             }
             $searchTerms = [];
-  
+
             foreach ($this->sConfig->facets as $facet) {
                 $fid = $facet->property;
                 if (is_array($reqFacets[$fid] ?? null)) {
