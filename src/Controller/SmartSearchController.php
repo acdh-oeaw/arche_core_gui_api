@@ -66,6 +66,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     public function search(array $postParams): Response {
+        
         error_log("SEARCH API backend:::::");
         error_log(print_r($postParams, true));
 
@@ -92,7 +93,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $reqFacets = $postParams['facets'] ?? [];
             $facets = $this->sConfig->facets;
 
-            if ($postParams['linkNamedEntities'] ?? true) {
+            if (!$postParams['linkNamedEntities'] ?? true) {
                 $facets = array_filter($facets, fn($x) => $x->type !== 'linkProperty');
             }
 
@@ -138,21 +139,32 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 }
             }
             unset($facet);
+            
             $spatialSearchTerm = null;
             if (isset($reqFacets['bbox'])) {
                 $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacets['bbox'], operator: '&&');
             }
 
             $search = $this->repoDb->getSmartSearch();
+            if (file_exists($this->sConfig->log)) {
+                unlink($this->sConfig->log);
+            }
+            $log = new \zozlak\logging\Log($this->sConfig->log);
+            $search->setQueryLog($log);
+           
+            
+            $search->setExactWeight($this->sConfig->exactMatchWeight);
+            $search->setLangWeight($this->sConfig->langMatchWeight);
             $search->setFacets($facets);
             $search->search($searchPhrase, $preferredLang, $searchInBinaries, $allowedProperties, $searchTerms, $spatialSearchTerm, $postParams['searchIn'] ?? [], $this->sConfig->matchesLimit);
 
             // display distribution of defined facets
             $facetsLang = !empty($postParams['labelsLang']) ? $postParams['labelsLang'] : (!empty($postParams['preferredLang']) ? $postParams['preferredLang'] : ($this->sConfig->prefLang ?? 'en'));
             $facetStats = $search->getSearchFacets($facetsLang);
-           
+
             // obtain one page of results
-            $page = (int) ($postParams['page'] ?? 0);
+           
+            $page = ((int) ($postParams['page'] ?? 0));
             $resourcesPerPage = (int) ($postParams['pageSize'] ?? 20);
             $cfg = new \acdhOeaw\arche\lib\SearchConfig();
             $cfg->metadataMode = '0_99_0_0';
@@ -164,7 +176,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             // parse triples into objects as ordinary
             $resources = [];
             $totalCount = 0;
-            
+
             foreach ($triplesIterator as $triple) {
                 if ($triple->property === (string) $this->schema->searchCount) {
                     $totalCount = (int) $triple->value;
@@ -213,7 +225,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                     unset($i->$p);
                 }
             }
-            
+
             return new Response(json_encode([
                         'facets' => $facetStats,
                         'results' => $resources,
