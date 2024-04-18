@@ -27,6 +27,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             (string) $this->schema->label => 'title',
             (string) $this->schema->namespaces->rdfs . 'type' => 'class',
             (string) $this->schema->modificationDate => 'availableDate',
+            (string) $this->schema->accessRestriction => 'accessRestriction',
+            (string) $this->schema->accessRestrictionAgg => 'accessRestrictionSummary',
             (string) $this->schema->ontology->description => 'description',
             (string) $this->schema->searchFts => 'matchHiglight',
             (string) $this->schema->searchMatch => 'matchProperty',
@@ -66,7 +68,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     public function search(array $postParams): Response {
-        
+       
         error_log("SEARCH API backend:::::");
         error_log(print_r($postParams, true));
 
@@ -167,7 +169,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $page = ((int) ($postParams['page'] ?? 0));
             $resourcesPerPage = (int) ($postParams['pageSize'] ?? 20);
             $cfg = new \acdhOeaw\arche\lib\SearchConfig();
-            $cfg->metadataMode = '0_99_0_0';
+            $cfg->metadataMode = '0_99_1_0';
             $cfg->metadataParentProperty = (string) $this->schema->parent;
             $cfg->resourceProperties = array_keys($this->context);
             $cfg->relativesProperties = array_keys($relContext);
