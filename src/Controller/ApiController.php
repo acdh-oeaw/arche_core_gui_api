@@ -121,24 +121,10 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
      * @return Response
      */
     public function archeChangeLanguage(string $lng = 'en'): Response {
-        
-        $current_user = \Drupal::currentUser();
-        /*
-          $language_manager = \Drupal::languageManager();
-          $language_manager->getCurrentLanguage()->getId();
-          $en = $language_manager->getLanguage('en');
-          $de = $language_manager->getLanguage('de');
-
-          $language_manager->reset();
-         * $language_manager->setConfigOverrideLanguage($de);
-         * \Drupal::languageManager()->getCurrentLanguage()->getId();
-          error_log('itt'); */
-
-        if ($current_user->isAnonymous()) {
-            $_SESSION['language'] = strtolower($lng);
-        } else {
-            $_SESSION['_sf2_attributes']['language'] = strtolower($lng);
-        }
+       
+        $_SESSION['_sf2_attributes']['language'] = strtolower($lng);
+        $_SESSION['language'] = strtolower($lng);
+       
         $response = new Response();
         $response->setContent(json_encode("language changed to: " . $lng));
         $response->headers->set('Content-Type', 'application/json');
