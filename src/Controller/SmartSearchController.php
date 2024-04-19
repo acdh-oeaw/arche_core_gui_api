@@ -254,4 +254,5 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             return new Response("", 404, ['Content-Type' => 'application/json']);
         }
     }
+    
 }
