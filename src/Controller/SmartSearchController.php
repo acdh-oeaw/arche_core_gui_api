@@ -39,7 +39,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     private function initialSearch(array $postParams): Response {
-
+        
         try {
             $this->sConfig = $this->aConfig->smartSearch;
             $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
@@ -48,7 +48,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $search->setFacets((array) $this->sConfig->facets);
 
             $prefLang = $postParams['preferredLang'] ?? $this->sConfig->prefLang ?? 'en';
-
+            
             return new Response(json_encode([
                         'facets' => $search->getInitialFacets($prefLang, $this->sConfig->facetsCache, false),
                         'results' => [],
@@ -57,6 +57,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'pageSize' => 0,
                         'maxCount' => -1
                             ], \JSON_UNESCAPED_SLASHES));
+           
         } catch (\Throwable $e) {
             return new Response("Error in search! " . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
         }
@@ -64,6 +65,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         if ($object === false) {
             return new Response("There is no resource", 404, ['Content-Type' => 'application/json']);
         }
+        
+       
         return new Response(json_encode($result));
     }
 
@@ -71,7 +74,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
        
         error_log("SEARCH API backend:::::");
         error_log(print_r($postParams, true));
-
+       
         if (isset($postParams['initialFacets'])) {
             return $this->initialSearch($postParams);
         }
@@ -227,7 +230,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                     unset($i->$p);
                 }
             }
-
+             
             return new Response(json_encode([
                         'facets' => $facetStats,
                         'results' => $resources,
