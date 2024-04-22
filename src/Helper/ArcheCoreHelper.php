@@ -235,7 +235,7 @@ class ArcheCoreHelper {
     public function extractRootView(object $pdoStmt, array $properties, array $propertyLabel, string $lang) {
         $this->resources = [];
         while ($triple = $pdoStmt->fetchObject()) {
-            
+
             $id = (string) $triple->id;
             $property = $triple->property;
 
@@ -245,10 +245,10 @@ class ArcheCoreHelper {
             }
         }
         $this->setRootDefaultTitle($lang);
-        foreach($this->resources as $id => $obj) {
-            foreach($obj as $prop => $o) {
-                
-                if(array_key_exists($prop, $propertyLabel)) {
+        foreach ($this->resources as $id => $obj) {
+            foreach ($obj as $prop => $o) {
+
+                if (array_key_exists($prop, $propertyLabel)) {
                     $this->resources[$id][$propertyLabel[$prop]] = $o[$lang];
                     unset($this->resources[$id][$prop]);
                 }
@@ -257,17 +257,16 @@ class ArcheCoreHelper {
         return $this->resources;
     }
 
-    
     public function extractRootDTView(object $pdoStmt, array $properties, array $propertyLabel, string $lang) {
         $this->resources = [];
         $i = 0;
-        
+
         while ($triple = $pdoStmt->fetchObject()) {
-           
-            if($triple->property === "search://count") {
+
+            if ($triple->property === "search://count") {
                 $this->resources['sumcount'] = $triple->value;
             }
-           
+
             $id = (string) $triple->id;
             $property = $triple->property;
 
@@ -275,26 +274,24 @@ class ArcheCoreHelper {
                 $tLang = (empty($triple->lang)) ? $triple->lang = $lang : $triple->lang;
                 $this->resources[$i]['acdhresId'] = $triple->id;
                 $this->resources[$i][$triple->property][$triple->lang] = $triple;
-                
             }
         }
         $i++;
         $this->setRootDefaultTitle($lang);
-        
-        foreach($this->resources as $id => $obj) {
-            foreach($obj as $prop => $o) {
-                
-                if(array_key_exists($prop, $propertyLabel)) {
+
+        foreach ($this->resources as $id => $obj) {
+            foreach ($obj as $prop => $o) {
+
+                if (array_key_exists($prop, $propertyLabel)) {
                     $this->resources[$id][$propertyLabel[$prop]] = $o[$lang];
                     unset($this->resources[$id][$prop]);
                 }
             }
         }
-        
-       
+
+
         return $this->resources;
     }
-
 
     /**
      * Get all metadata for a given resource
@@ -312,7 +309,6 @@ class ArcheCoreHelper {
             $this->resources[$id] ??= (object) ['id' => (int) $id];
 
             if ($triple->id !== $resId && isset($contextRelatives[$triple->property])) {
-
                 $property = $contextRelatives[$triple->property];
                 $relvalues = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
 
@@ -342,20 +338,27 @@ class ArcheCoreHelper {
                     $tid = $triple->value;
                     $this->resources[$tid] ??= (object) ['id' => (int) $tid];
                     $this->resources[$id]->$property[$tid] = (object) $this->resources[$tid];
-                } else {
+                }elseif ($triple->type === 'ID') {
+                    $this->resources[$id]->$property[$id][] = (object) $triple;
+                }else {
                     if (!($triple->lang)) {
                         $triple->lang = $lang;
                     }
                     $this->resources[$id]->$property[$id] = (object) $triple;
                 }
+            } elseif ($triple->property === 'ID') {
+                $this->resources[$id]->$property[$id][] = (object) $triple;
             }
         }
-        if (count($this->resources) < 2) {
+       
+        if (count($this->resources) < 1) {
             return new \stdClass();
         }
 
         $this->changePropertyToShortcut((string) $resId);
+       
         $this->setDefaultTitle($lang, $resId);
+        
         return $this->resources[(string) $resId];
     }
 
@@ -442,6 +445,4 @@ class ArcheCoreHelper {
             }
         }
     }
-
-    
 }
