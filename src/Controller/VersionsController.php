@@ -4,8 +4,6 @@ namespace Drupal\arche_core_gui_api\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use EasyRdf\Graph;
-use EasyRdf\Literal;
 use acdhOeaw\arche\lib\RepoDb;
 use acdhOeaw\arche\lib\SearchConfig;
 use acdhOeaw\arche\lib\SearchTerm;
@@ -43,12 +41,12 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $schema = $this->repoDb->getSchema();
 
         $context = [
-            $schema->label => 'title',
-            $schema->id => 'id',
-            $schema->isNewVersionOf => 'prevVersion',
-            $schema->ontology->version => 'version',
-            $schema->creationDate => 'avDate',
-            $schema->accessRestriction => 'accessRestriction'
+            (string)$schema->label => 'title',
+            (string)$schema->id => 'id',
+            (string)$schema->isNewVersionOf => 'prevVersion',
+            (string)$schema->ontology->version => 'version',
+            (string)$schema->creationDate => 'avDate',
+            (string)$schema->accessRestriction => 'accessRestriction'
         ];
 
         $result = $this->getVersions($id, $schema->isNewVersionOf, $context);

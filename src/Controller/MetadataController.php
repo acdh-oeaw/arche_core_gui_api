@@ -4,8 +4,6 @@ namespace Drupal\arche_core_gui_api\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use EasyRdf\Graph;
-use EasyRdf\Literal;
 use acdhOeaw\arche\lib\RepoDb;
 use acdhOeaw\arche\lib\SearchConfig;
 use acdhOeaw\arche\lib\SearchTerm;
@@ -30,18 +28,18 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $scfg->metadataMode = 'resource';
 
         $scfg->resourceProperties = [
-            $schema->label,
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasLatitude',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasLongitude',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasWKT',
-            $schema->id
+           (string) $schema->label,
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLatitude',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLongitude',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasWKT',
+            (string)$schema->id
         ];
 
         $properties = [
-            $schema->label => 'title',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasLatitude' => 'lat',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasLongitude' => 'lon',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasWKT' => 'wkt'
+            (string)$schema->label => 'title',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLatitude' => 'lat',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLongitude' => 'lon',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasWKT' => 'wkt'
         ];
         $scfg->relativesProperties = [];
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(RC::RDF_TYPE, 'https://vocabs.acdh.oeaw.ac.at/schema#Place')], $scfg);
@@ -71,21 +69,21 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $scfg->orderByLang = $lang;
 
         $scfg->resourceProperties = [
-            $schema->label,
-            $schema->modificationDate,
-            $schema->creationDate,
-            $schema->ontology->description,
-            $schema->ontology->version,
-            $schema->id
+            (string)$schema->label,
+            (string)$schema->modificationDate,
+            (string)$schema->creationDate,
+            (string)$schema->ontology->description,
+            (string)$schema->ontology->version,
+            (string)$schema->id
         ];
 
         $properties = [
-            $schema->label => 'title',
-            $schema->modificationDate => 'modifyDate',
-            $schema->creationDate => 'avDate',
-            $schema->ontology->description => 'description',
-            $schema->ontology->version => 'version',
-            $schema->id => 'identifier'
+            (string)$schema->label => 'title',
+            (string)$schema->modificationDate => 'modifyDate',
+            (string)$schema->creationDate => 'avDate',
+            (string)$schema->ontology->description => 'description',
+            (string)$schema->ontology->version => 'version',
+            (string)$schema->id => 'identifier'
         ];
         $scfg->relativesProperties = [];
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(RC::RDF_TYPE, $schema->classes->topCollection)], $scfg);
@@ -136,19 +134,19 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $scfg->metadataMode = 'resource';
 
         $scfg->resourceProperties = [
-            $schema->label,
-            $schema->modificationDate,
-            $schema->creationDate,
-            $schema->ontology->description,
-            $schema->id
+            (string)$schema->label,
+            (string)$schema->modificationDate,
+            (string)$schema->creationDate,
+            (string)$schema->ontology->description,
+            (string)$schema->id
         ];
 
         $properties = [
-            $schema->label => 'title',
-            $schema->modificationDate => 'modifyDate',
-            $schema->creationDate => 'avDate',
-            $schema->ontology->description => 'description',
-            $schema->id => 'identifier'
+            (string)$schema->label => 'title',
+            (string)$schema->modificationDate => 'modifyDate',
+            (string)$schema->creationDate => 'avDate',
+            (string)$schema->ontology->description => 'description',
+            (string)$schema->id => 'identifier'
         ];
         $scfg->relativesProperties = [];
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(RC::RDF_TYPE, $schema->classes->topCollection)], $scfg);
@@ -179,8 +177,8 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
         $schema = $this->repoDb->getSchema();
         $context = [
-            $schema->label => 'title',
-            $schema->parent => 'parent',
+            (string)$schema->label => 'title',
+            (string)$schema->parent => 'parent',
         ];
 
         $pdoStmt = $res->getMetadataStatement(
@@ -219,18 +217,18 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
         $schema = $this->repoDb->getSchema();
         $contextResource = [
-            $schema->label => 'title',
-            $schema->parent => 'parent',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasAuthor' => 'author',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasCurator' => 'curator',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasLicense' => 'license',
-            'https://vocabs.acdh.oeaw.ac.at/schema#binarySize' => 'binarySize',
-            \zozlak\RdfConstants::RDF_TYPE => 'class',
+            (string)$schema->label => 'title',
+            (string)$schema->parent => 'parent',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasAuthor' => 'author',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasCurator' => 'curator',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLicense' => 'license',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#binarySize' => 'binarySize',
+            (string)\zozlak\RdfConstants::RDF_TYPE => 'class',
         ];
         $contextRelatives = [
-            $schema->label => 'title',
-            \zozlak\RdfConstants::RDF_TYPE => 'class',
-            $schema->parent => 'parent',
+            (string)$schema->label => 'title',
+            (string)\zozlak\RdfConstants::RDF_TYPE => 'class',
+            (string)$schema->parent => 'parent',
         ];
 
         $pdoStmt = $res->getMetadataStatement(

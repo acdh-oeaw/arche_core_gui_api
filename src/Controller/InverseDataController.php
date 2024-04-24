@@ -4,8 +4,6 @@ namespace Drupal\arche_core_gui_api\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use EasyRdf\Graph;
-use EasyRdf\Literal;
 use acdhOeaw\arche\lib\RepoDb;
 use acdhOeaw\arche\lib\SearchConfig;
 use acdhOeaw\arche\lib\SearchTerm;
@@ -141,11 +139,11 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         ];
 
         $resContext = [
-            $schema->label => 'title',
-            \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
-            $schema->creationDate => 'avDate',
-            $schema->id => 'identifier',
-            $schema->accessRestriction => 'accessRestriction'
+            (string)$schema->label => 'title',
+            (string)\zozlak\RdfConstants::RDF_TYPE => 'rdftype',
+            (string)$schema->creationDate => 'avDate',
+            (string)$schema->id => 'identifier',
+            (string)$schema->accessRestriction => 'accessRestriction'
         ];
 
         $relContext = [

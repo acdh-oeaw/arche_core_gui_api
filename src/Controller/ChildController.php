@@ -4,8 +4,6 @@ namespace Drupal\arche_core_gui_api\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use EasyRdf\Graph;
-use EasyRdf\Literal;
 use acdhOeaw\arche\lib\RepoDb;
 use acdhOeaw\arche\lib\SearchConfig;
 use acdhOeaw\arche\lib\SearchTerm;
@@ -36,17 +34,17 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
 
         $result = [];
         $schema = $this->repoDb->getSchema();
-        $property = $schema->parent;
+        $property = (string)$schema->parent;
 
         $resContext = [
-            $schema->label => 'title',
-            \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
-            $schema->creationDate => 'avDate',
-            $schema->id => 'identifier',
-            $schema->accessRestriction => 'accessRestriction',
-            $schema->binarySize => 'binarysize',
-            $schema->fileName => 'filename',
-            $schema->ingest->location => 'locationpath'
+            (string)$schema->label => 'title',
+            (string)\zozlak\RdfConstants::RDF_TYPE => 'rdftype',
+            (string)$schema->creationDate => 'avDate',
+            (string)$schema->id => 'identifier',
+            (string)$schema->accessRestriction => 'accessRestriction',
+            (string)$schema->binarySize => 'binarysize',
+            (string)$schema->fileName => 'filename',
+            (string)$schema->ingest->location => 'locationpath'
         ];
 
         $relContext = [
@@ -110,21 +108,21 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
 
         $result = [];
         $schema = $this->repoDb->getSchema();
-        $property = [$schema->parent, 'http://www.w3.org/2004/02/skos/core#prefLabel'];
+        $property = [(string)$schema->parent, 'http://www.w3.org/2004/02/skos/core#prefLabel'];
 
         $resContext = [
-            $schema->label => 'title',
-            \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
-            $schema->creationDate => 'avDate',
-            $schema->id => 'identifier',
-            $schema->accessRestriction => 'accessRestriction',
-            $schema->binarySize => 'binarysize',
-            $schema->fileName => 'filename',
-            $schema->ingest->location => 'locationpath'
+            (string)$schema->label => 'title',
+            (string)\zozlak\RdfConstants::RDF_TYPE => 'rdftype',
+            (string)$schema->creationDate => 'avDate',
+            (string)$schema->id => 'identifier',
+            (string)$schema->accessRestriction => 'accessRestriction',
+            (string)$schema->binarySize => 'binarysize',
+            (string)$schema->fileName => 'filename',
+            (string)$schema->ingest->location => 'locationpath'
         ];
 
         $relContext = [
-            (string) $schema->label => 'title',
+            (string)$schema->label => 'title',
         ];
 
         $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
@@ -170,7 +168,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $properties = is_string($properties) ? [$properties] : $properties;
 
         $schema = $this->repoDb->getSchema();
-        $totalCountProp = $this->repoDb->getSchema()->searchCount;
+        $totalCountProp = (string)$this->repoDb->getSchema()->searchCount;
         try {
             $res = new \acdhOeaw\arche\lib\RepoResourceDb($resId, $this->repoDb);
         } catch (\Exception $ex) {
@@ -196,8 +194,8 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $relations = [];
         $resources = [];
         $context = array_merge($relContext, $resContext);
-        $context[$schema->searchOrder] = 'searchOrder';
-        $context[$schema->searchOrderValue . '1'] = 'searchValue';
+        $context[(string)$schema->searchOrder] = 'searchOrder';
+        $context[(string)$schema->searchOrderValue . '1'] = 'searchValue';
         $totalCount = null;
         while ($triple = $pdoStmt->fetchObject()) {
             $triple->value ??= '';
