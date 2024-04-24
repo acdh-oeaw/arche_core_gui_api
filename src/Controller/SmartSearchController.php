@@ -117,7 +117,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         }
                         $facet->defaultWeigth = 0.0;
                         continue;
-                    } elseif ($facet->type === 'matchProperty') {
+		    } elseif ($facet->type === 'matchProperty') {
                         $allowedProperties = $reqFacet;
                     } elseif ($facet->type === 'continuous') {
                         if (!empty($reqFacet['min'])) {
