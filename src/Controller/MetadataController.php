@@ -28,7 +28,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $scfg->metadataMode = 'resource';
 
         $scfg->resourceProperties = [
-           (string) $schema->label,
+            (string)$schema->label,
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLatitude',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLongitude',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasWKT',
