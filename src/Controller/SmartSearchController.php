@@ -39,7 +39,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     private function initialSearch(array $postParams): Response {
-        
+
         try {
             $this->sConfig = $this->aConfig->smartSearch;
             $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
@@ -48,7 +48,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $search->setFacets((array) $this->sConfig->facets);
 
             $prefLang = $postParams['preferredLang'] ?? $this->sConfig->prefLang ?? 'en';
-            
+
             return new Response(json_encode([
                         'facets' => $search->getInitialFacets($prefLang, $this->sConfig->facetsCache, false),
                         'results' => [],
@@ -57,7 +57,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'pageSize' => 0,
                         'maxCount' => -1
                             ], \JSON_UNESCAPED_SLASHES));
-           
         } catch (\Throwable $e) {
             return new Response("Error in search! " . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
         }
@@ -65,16 +64,16 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         if ($object === false) {
             return new Response("There is no resource", 404, ['Content-Type' => 'application/json']);
         }
-        
-       
+
+
         return new Response(json_encode($result));
     }
 
     public function search(array $postParams): Response {
-       
+
         error_log("SEARCH API backend:::::");
         error_log(print_r($postParams, true));
-       
+
         if (isset($postParams['initialFacets'])) {
             return $this->initialSearch($postParams);
         }
@@ -117,8 +116,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         }
                         $facet->defaultWeigth = 0.0;
                         continue;
-		    } elseif ($facet->type === 'matchProperty') {
-                        $allowedProperties = $reqFacet;
+                    } elseif ($facet->type === 'matchProperty') {
+                        $allowedProperties = reset($reqFacet);
                     } elseif ($facet->type === 'continuous') {
                         if (!empty($reqFacet['min'])) {
                             $facet->min = (int) $reqFacet['min'];
@@ -144,7 +143,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 }
             }
             unset($facet);
-            
+
             $spatialSearchTerm = null;
             if (isset($reqFacets['bbox'])) {
                 $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacets['bbox'], operator: '&&');
@@ -156,19 +155,23 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             }
             $log = new \zozlak\logging\Log($this->sConfig->log);
             $search->setQueryLog($log);
-           
-            
+
             $search->setExactWeight($this->sConfig->exactMatchWeight);
             $search->setLangWeight($this->sConfig->langMatchWeight);
             $search->setFacets($facets);
-            $search->search($searchPhrase, $preferredLang, $searchInBinaries, $allowedProperties, $searchTerms, $spatialSearchTerm, $postParams['searchIn'] ?? [], $this->sConfig->matchesLimit);
+            $searchIn = $postParams['searchIn'] ?? [];
+            $search->search($searchPhrase, $preferredLang, $searchInBinaries, $allowedProperties, $searchTerms, $spatialSearchTerm, $searchIn, $this->sConfig->matchesLimit);
 
             // display distribution of defined facets
             $facetsLang = !empty($postParams['labelsLang']) ? $postParams['labelsLang'] : (!empty($postParams['preferredLang']) ? $postParams['preferredLang'] : ($this->sConfig->prefLang ?? 'en'));
-            $facetStats = $search->getSearchFacets($facetsLang);
-
+            $emptySearch = empty($searchPhrase) && count($searchTerms) === 0 && $spatialSearchTerm === null && count($searchIn) === 0;
+            if ($emptySearch) {
+                $facetStats = $search->getInitialFacets($facetsLang, $this->sConfig->facetsCache);
+            } else {
+                $facetStats = $search->getSearchFacets($facetsLang);
+            }
             // obtain one page of results
-           
+
             $page = ((int) ($postParams['page'] ?? 0));
             $resourcesPerPage = (int) ($postParams['pageSize'] ?? 20);
             $cfg = new \acdhOeaw\arche\lib\SearchConfig();
@@ -230,14 +233,14 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                     unset($i->$p);
                 }
             }
-             
+
             return new Response(json_encode([
                         'facets' => $facetStats,
                         'results' => $resources,
-                        'totalCount' => $totalCount,
+                        'totalCount' => $emptySearch ? -1 : $totalCount,
+                        'maxCount'   => $emptySearch ? -1 : $sConfig->matchesLimit,
                         'page' => $page,
-                        'pageSize' => $resourcesPerPage,
-                        'maxCount' => $this->sConfig->matchesLimit
+                        'pageSize' => $resourcesPerPage
                             ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
 
@@ -257,5 +260,4 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             return new Response("", 404, ['Content-Type' => 'application/json']);
         }
     }
-    
 }
