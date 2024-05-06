@@ -38,6 +38,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         ];
     }
 
+    /**
+     * The first load or after reset search, which provides only facets
+     * @param array $postParams
+     * @return Response
+     */
     private function initialSearch(array $postParams): Response {
 
         try {
@@ -69,6 +74,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         return new Response(json_encode($result));
     }
 
+    /**
+     * The main search 
+     * @param array $postParams
+     * @return Response
+     */
     public function search(array $postParams): Response {
 
         error_log("SEARCH API backend:::::");
@@ -238,7 +248,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'facets' => $facetStats,
                         'results' => $resources,
                         'totalCount' => $emptySearch ? -1 : $totalCount,
-                        'maxCount'   => $emptySearch ? -1 : $sConfig->matchesLimit,
+                        'maxCount' => $emptySearch ? -1 : $sConfig->matchesLimit,
                         'page' => $page,
                         'pageSize' => $resourcesPerPage
                             ], \JSON_UNESCAPED_SLASHES));
@@ -253,11 +263,68 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         return new Response(json_encode($result));
     }
 
+    /**
+     * Fetch the date facets - deprecated
+     * @return Response
+     */
     public function dateFacets(): Response {
         try {
             return new Response(json_encode($this->aConfig->smartSearch->dateFacets));
         } catch (Throwable $e) {
             return new Response("", 404, ['Content-Type' => 'application/json']);
         }
+    }
+
+    /**
+     * Search input autocomplete
+     * @param string $str
+     * @return Response
+     */
+    public function autocomplete(string $str): Response {
+        $response = [];
+        $q = $str ?? '';
+        if (!empty($q)) {
+            $this->sConfig = $this->aConfig->smartSearch;
+            $limit = $this->sConfig->autocomplete?->count ?? 10;
+            $maxLength = $sConfig->autocomplete?->maxLength ?? 50;
+            
+            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
+
+            $weights = array_filter($this->sConfig->facets, fn($x) => $x->type === 'matchProperty');
+            $weights = reset($weights) ?: new stdClass();
+            $weights->weights ??= ['_' => 0.0];
+            $weights->defaultWeight ??= 1.0;
+
+            $query = new \zozlak\queryPart\QueryPart("WITH weights (property, weight) AS (VALUES ");
+            foreach ($weights->weights as $k => $v) {
+                $query->query .= "(?::text, ?::float),";
+                $query->param[] = $k;
+                $query->param[] = $v;
+            }
+            $query->query = substr($query->query, 0, -1) . ")";
+            $query->query .= "
+            SELECT DISTINCT value FROM (
+                SELECT *
+                FROM metadata LEFT JOIN weights USING (property)
+                WHERE value ILIKE ? AND length(value) < ?
+                ORDER BY coalesce(weight, ?) DESC, value
+            ) t LIMIT ?
+        ";
+            $query->param[] = $q . '%';
+            $query->param[] = $maxLength;
+            $query->param[] = $weights->defaultWeight;
+            $query->param[] = $limit;
+            $pdoStmnt = $pdo->prepare($query->query);
+            $pdoStmnt->execute($query->param);
+            $response = $pdoStmnt->fetchAll(\PDO::FETCH_COLUMN);
+
+            $limit -= count($response);
+            if ($limit > 0) {
+                $query->param[count($query->param) - 4] = '%' . $q . '%';
+                $pdoStmnt->execute($query->param);
+                $response = array_merge($response, $pdoStmnt->fetchAll(\PDO::FETCH_COLUMN));
+            }
+        }
+        return new Response(json_encode($response));
     }
 }

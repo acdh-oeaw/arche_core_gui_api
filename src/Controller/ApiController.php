@@ -96,6 +96,11 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\SmartSearchController();
         return $controller->search($_GET);
     }
+    
+    public function smartSearchAutoComplete(string $str): Response {
+        $controller = new \Drupal\arche_core_gui_api\Controller\SmartSearchController();
+        return $controller->autocomplete($str);
+    }
 
     public function smartSearchDateFacets(): Response {
         $controller = new \Drupal\arche_core_gui_api\Controller\SearchBlockController();
