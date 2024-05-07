@@ -13,8 +13,6 @@
     "require": {
     },
     "require-dev": {
-        "phpunit/phpunit": "^9",
-        "drupal/core-dev": "*"
     },
     "autoload": {
         "psr-4": {
