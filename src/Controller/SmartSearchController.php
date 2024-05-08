@@ -4,6 +4,8 @@ namespace Drupal\arche_core_gui_api\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use quickRdf\DataFactory as DF;
+use termTemplates\PredicateTemplate as PT;
 
 /**
  * Description of SmartSearchController
@@ -55,7 +57,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $prefLang = $postParams['preferredLang'] ?? $this->sConfig->prefLang ?? 'en';
 
             return new Response(json_encode([
-                        'facets' => $search->getInitialFacets($prefLang, $this->sConfig->facetsCache, false),
+                        'facets' => $search->getInitialFacets($prefLang, $this->sConfig->facetsCache, true),
                         'results' => [],
                         'totalCount' => -1,
                         'page' => 0,
@@ -111,13 +113,17 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 $facets = array_filter($facets, fn($x) => $x->type !== 'linkProperty');
             }
 
+            $specialFacets = [\acdhOeaw\arche\lib\SmartSearch::FACET_MAP, \acdhOeaw\arche\lib\SmartSearch::FACET_LINK, \acdhOeaw\arche\lib\SmartSearch::FACET_MATCH];
             $searchTerms = [];
+            $spatialSearchTerms = null;
             $allowedProperties = [];
+            $facetsInUse = [];
             foreach ($facets as $facet) {
-                $fid = $facet->property ?? $facet->type;
-                if (is_array($reqFacets[$fid] ?? null)) {
+                $fid = in_array($facet->type, $specialFacets) ? $facet->type : $facet->property;
+                if (is_array($reqFacets[$fid] ?? null) || isset($reqFacets[$fid]) && $fid === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
+                    $facetsInUse[] = $fid;
                     $reqFacet = $reqFacets[$fid];
-                    if ($facet->type === 'linkProperty') {
+                    if ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_LINK) {
                         foreach ($reqFacet as $i) {
                             $facet->weights->$i ??= 1.0;
                         }
@@ -126,9 +132,9 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         }
                         $facet->defaultWeigth = 0.0;
                         continue;
-                    } elseif ($facet->type === 'matchProperty') {
-                        $allowedProperties = reset($reqFacet);
-                    } elseif ($facet->type === 'continuous') {
+                    } elseif ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_MATCH) {
+                        $allowedProperties = $reqFacet;
+                    } elseif ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_CONTINUOUS) {
                         if (!empty($reqFacet['min'])) {
                             $facet->min = (int) $reqFacet['min'];
                             $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm($facet->end, $facet->min, '>=', type: \acdhOeaw\arche\lib\SearchTerm::TYPE_NUMBER);
@@ -139,15 +145,17 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         }
                         if (isset($facet->min) || isset($facet->max)) {
                             foreach ($facet->start as $n => $i) {
-                                $this->context[$i] = "|min|$fid|$n";
+                                $context[$i] = "|min|$fid|$n";
                             }
                             foreach ($facet->end as $n => $i) {
-                                $this->context[$i] = "|max|$fid|$n";
+                                $context[$i] = "|max|$fid|$n";
                             }
                         }
                         $facet->distribution = (bool) ($reqFacets[$fid]['distribution'] ?? false);
+                    } elseif ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
+                        $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacet, operator: '&&');
                     } elseif (count($reqFacet) > 0) {
-                        $type = $facet->type === 'object' ? \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION : null;
+                        $type = $facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_OBJECT ? \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION : null;
                         $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm($fid, array_values($reqFacet), type: $type);
                     }
                 }
@@ -244,6 +252,47 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 }
             }
 
+            // put facets used for search first
+            // uasort is stable in PHP >=8.0
+            uasort($facetStats, fn($a, $b) => in_array($b->property, $facetsInUse) <=> in_array($a->property, $facetsInUse));
+
+            // check for corner cases user should be warned about
+            $messages = [];
+            foreach ($sConfig->warnings ?? [] as $i) {
+                $dataset = new \quickRdf\Dataset(false);
+                $sbj = DF::namedNode('subject');
+                foreach ($reqFacets as $property => $values) {
+                    $values = is_array($values) ? $values : [$values];
+                    $dataset->add(array_map(fn($x) => DF::Quad($sbj, DF::namedNode($property), DF::literal($x)), $values));
+                }
+                $outerMatch = true;
+                foreach ($i->match as $matchGroup) {
+                    $groupMatch = false;
+                    foreach ($matchGroup as $property => $value) {
+                        if (str_starts_with((string) $value, '!')) {
+                            $groupMatch = $groupMatch || !$dataset->copy(new PT($property))->every(new PT($property, substr($value, 1)));
+                        } else {
+                            $groupMatch = $groupMatch || $dataset->any(new PT($property, $value));
+                        }
+                    }
+                    $outerMatch = $outerMatch && $groupMatch;
+                }
+                if ($outerMatch) {
+                    $msg = (array) $i->message;
+                    $messages[] = [
+                        'message' => $msg[$facetsLang] ?? $msg['en'] ?? reset($msg),
+                        'class' => 'bg-' . $i->severity ?? 'bg-error',
+                    ];
+                }
+            }
+            if ($emptySearch) {
+                $msg = (array) $sConfig->emptySearchMessage;
+                $messages[] = [
+                    'message' => $msg[$facetsLang] ?? $msg['en'] ?? reset($msg),
+                    'class' => 'bg-info',
+                ];
+            }
+
             return new Response(json_encode([
                         'facets' => $facetStats,
                         'results' => $resources,
@@ -253,7 +302,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'pageSize' => $resourcesPerPage
                             ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
-
             return new Response("Error in search! " . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
         }
 
@@ -287,7 +335,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $this->sConfig = $this->aConfig->smartSearch;
             $limit = $this->sConfig->autocomplete?->count ?? 10;
             $maxLength = $sConfig->autocomplete?->maxLength ?? 50;
-            
+
             $pdo = new \PDO($this->aConfig->dbConnStr->guest);
 
             $weights = array_filter($this->sConfig->facets, fn($x) => $x->type === 'matchProperty');
