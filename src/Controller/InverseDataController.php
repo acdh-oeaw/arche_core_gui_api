@@ -56,8 +56,8 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $relations = [];
         $resources = [];
         $context = array_merge($relContext, $resContext);
-        $context[$schema->searchOrder] = 'searchOrder';
-        $context[$schema->searchOrderValue . '1'] = 'searchValue';
+        $context[(string)$schema->searchOrder] = 'searchOrder';
+        $context[(string)$schema->searchOrderValue . '1'] = 'searchValue';
         $totalCount = null;
         
         while ($triple = $pdoStmt->fetchObject()) {
@@ -131,11 +131,11 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             'https://vocabs.acdh.oeaw.ac.at/schema#hasDerivedPublication',
             $schema->dissService->parent,
             */
-            'https://vocabs.acdh.oeaw.ac.at/schema#relation',
-            'https://vocabs.acdh.oeaw.ac.at/schema#continues',
-            'https://vocabs.acdh.oeaw.ac.at/schema#isContinuedBy',
-            'https://vocabs.acdh.oeaw.ac.at/schema#documents',
-            'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy'
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#relation',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#continues',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isContinuedBy',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#documents',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy'
         ];
 
         $resContext = [
@@ -202,20 +202,20 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $scfg->orderByLang = $lang;
 
         $property = [
-            'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasDerivedPublication',
-            'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasSource',
-            'https://vocabs.acdh.oeaw.ac.at/schema#documents',
-            'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy'
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasDerivedPublication',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasSource',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#documents',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy'
         ];
 
         $resContext = [
-            $schema->label => 'title',
-            \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasCustomCitation' => 'customCitation',
-            $schema->id => 'identifier',
-            $schema->accessRestriction => 'accessRestriction'
+            (string)$schema->label => 'title',
+            (string)\zozlak\RdfConstants::RDF_TYPE => 'rdftype',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasCustomCitation' => 'customCitation',
+            (string)$schema->id => 'identifier',
+           (string)$schema->accessRestriction => 'accessRestriction'
         ];
 
         $relContext = [
