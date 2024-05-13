@@ -18,6 +18,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     private $sConfig;
     private $context = [];
     private $schema;
+    private $baseUrl;
+    private $preferredLang;
+    private $searchInBinaries;
+    private $searchPhrase;
+    private $reqFacets;
 
     public function __construct() {
         parent::__construct();
@@ -40,6 +45,16 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         ];
     }
 
+    private function setBasicPropertys(array $postParams) {
+        $this->sConfig = $this->aConfig->smartSearch;
+        $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
+        $this->baseUrl = $this->aConfig->rest->urlBase . $this->aConfig->rest->pathBase;
+        $this->preferredLang = $postParams['preferredLang'] ?? $this->sConfig->prefLang ?? 'en';
+        $this->searchInBinaries = $postParams['includeBinaries'] ?? false;
+        $this->searchPhrase = $postParams['q'] ?? "";
+        $this->reqFacets = $postParams['facets'] ?? [];
+    }
+
     /**
      * The first load or after reset search, which provides only facets
      * @param array $postParams
@@ -48,16 +63,13 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     private function initialSearch(array $postParams): Response {
 
         try {
-            $this->sConfig = $this->aConfig->smartSearch;
-            $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
-            $baseUrl = $this->aConfig->rest->urlBase . $this->aConfig->rest->pathBase;
+            $this->setBasicPropertys($postParams);
             $search = $this->repoDb->getSmartSearch();
             $search->setFacets((array) $this->sConfig->facets);
-
-            $prefLang = $postParams['preferredLang'] ?? $this->sConfig->prefLang ?? 'en';
+            $useCache = !((bool) ($postParams['noCache'] ?? false));
 
             return new Response(json_encode([
-                        'facets' => $search->getInitialFacets($prefLang, $this->sConfig->facetsCache, true),
+                        'facets' => $search->getInitialFacets($this->preferredLang, $this->sConfig->facetsCache, $useCache),
                         'results' => [],
                         'totalCount' => -1,
                         'page' => 0,
@@ -77,6 +89,27 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     /**
+     * Remove the facet cache
+     * @return string
+     */
+    private function removeCache() {
+        try {
+            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
+            $query = $pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
+            $query->execute([$this->sConfig->cacheTimeout]);
+            $requestHash = md5(print_r($_POST, true));
+            $query = $pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response");
+            $query->execute([$requestHash]);
+            $result = $query->fetchColumn();
+            if ($result !== false) {
+                return $result;
+            }
+        } catch (\Throwable $e) {
+            return "";
+        }
+    }
+
+    /**
      * The main search 
      * @param array $postParams
      * @return Response
@@ -86,13 +119,21 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         error_log("SEARCH API backend:::::");
         error_log(print_r($postParams, true));
 
+        //if we do the empty search or reset filters then just load the facets
         if (isset($postParams['initialFacets'])) {
             return $this->initialSearch($postParams);
         }
+
         try {
-            $this->sConfig = $this->aConfig->smartSearch;
-            $this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
-            $baseUrl = $this->aConfig->rest->urlBase . $this->aConfig->rest->pathBase;
+            $this->setBasicPropertys($postParams);
+            $useCache = !((bool) ($postParams['noCache'] ?? false));
+
+            if ($useCache) {
+                $cacheResult = $this->removeCache();
+                if (!empty($cacheResult)) {
+                    return new Response(json_encode($cacheResult));
+                }
+            }
 
             $this->setContext();
             // context needed to display search results
@@ -103,10 +144,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             ];
 
             // SEARCH CONFIG
-            $preferredLang = $postParams['preferredLang'] ?? '';
-            $searchInBinaries = $postParams['includeBinaries'] ?? false;
-            $searchPhrase = $postParams['q'];
-            $reqFacets = $postParams['facets'] ?? [];
+
             $facets = $this->sConfig->facets;
 
             if (!$postParams['linkNamedEntities'] ?? true) {
@@ -120,9 +158,9 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $facetsInUse = [];
             foreach ($facets as $facet) {
                 $fid = in_array($facet->type, $specialFacets) ? $facet->type : $facet->property;
-                if (is_array($reqFacets[$fid] ?? null) || isset($reqFacets[$fid]) && $fid === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
+                if (is_array($this->reqFacets[$fid] ?? null) || isset($this->reqFacets[$fid]) && $fid === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
                     $facetsInUse[] = $fid;
-                    $reqFacet = $reqFacets[$fid];
+                    $reqFacet = $this->reqFacets[$fid];
                     if ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_LINK) {
                         foreach ($reqFacet as $i) {
                             $facet->weights->$i ??= 1.0;
@@ -151,7 +189,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                                 $context[$i] = "|max|$fid|$n";
                             }
                         }
-                        $facet->distribution = (bool) ($reqFacets[$fid]['distribution'] ?? false);
+                        $facet->distribution = (bool) ($this->reqFacets[$fid]['distribution'] ?? false);
                     } elseif ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
                         $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacet, operator: '&&');
                     } elseif (count($reqFacet) > 0) {
@@ -163,8 +201,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             unset($facet);
 
             $spatialSearchTerm = null;
-            if (isset($reqFacets['bbox'])) {
-                $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacets['bbox'], operator: '&&');
+            if (isset($this->reqFacets['bbox'])) {
+                $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $this->reqFacets['bbox'], operator: '&&');
             }
 
             $search = $this->repoDb->getSmartSearch();
@@ -178,11 +216,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $search->setLangWeight($this->sConfig->langMatchWeight);
             $search->setFacets($facets);
             $searchIn = $postParams['searchIn'] ?? [];
-            $search->search($searchPhrase, $preferredLang, $searchInBinaries, $allowedProperties, $searchTerms, $spatialSearchTerm, $searchIn, $this->sConfig->matchesLimit);
+            $search->search($this->searchPhrase, $this->preferredLang, $this->searchInBinaries, $allowedProperties, $searchTerms, $spatialSearchTerm, $searchIn, $this->sConfig->matchesLimit);
 
             // display distribution of defined facets
             $facetsLang = !empty($postParams['labelsLang']) ? $postParams['labelsLang'] : (!empty($postParams['preferredLang']) ? $postParams['preferredLang'] : ($this->sConfig->prefLang ?? 'en'));
-            $emptySearch = empty($searchPhrase) && count($searchTerms) === 0 && $spatialSearchTerm === null && count($searchIn) === 0;
+            $emptySearch = empty($this->searchPhrase) && count($searchTerms) === 0 && $spatialSearchTerm === null && count($searchIn) === 0;
             if ($emptySearch) {
                 $facetStats = $search->getInitialFacets($facetsLang, $this->sConfig->facetsCache);
             } else {
@@ -229,7 +267,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
             $facets = array_combine(array_map(fn($x) => $x->property ?? $x->type, $facets), $facets);
             foreach ($resources as $i) {
-                $i->url = $baseUrl . $i->id;
+                $i->url = $this->baseUrl . $i->id;
                 $i->matchProperty ??= [];
                 $i->matchHiglight ??= array_fill(0, count($i->matchProperty), '');
 
@@ -261,7 +299,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             foreach ($sConfig->warnings ?? [] as $i) {
                 $dataset = new \quickRdf\Dataset(false);
                 $sbj = DF::namedNode('subject');
-                foreach ($reqFacets as $property => $values) {
+                foreach ($this->reqFacets as $property => $values) {
                     $values = is_array($values) ? $values : [$values];
                     $dataset->add(array_map(fn($x) => DF::Quad($sbj, DF::namedNode($property), DF::literal($x)), $values));
                 }
@@ -292,7 +330,9 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                     'class' => 'bg-info',
                 ];
             }
-
+            if ($useCache) {
+                $this->cacheResults($requestHash, $result);
+            }
             return new Response(json_encode([
                         'facets' => $facetStats,
                         'results' => $resources,
@@ -309,6 +349,16 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             return new Response("There is no resource", 404, ['Content-Type' => 'application/json']);
         }
         return new Response(json_encode($result));
+    }
+
+    private function cacheResults($requestHash, $result) {
+        try {
+            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
+            $query = $pdo->prepare("INSERT INTO gui.search_cache VALUES (?, ?, now(), now())");
+            $query->execute([$requestHash, $response]);
+        } catch (\Throwable $e) {
+            return "";
+        }
     }
 
     /**
