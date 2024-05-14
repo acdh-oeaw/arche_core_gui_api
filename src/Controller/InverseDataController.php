@@ -30,7 +30,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $properties = is_string($properties) ? [$properties] : $properties;
 
         $schema = $this->repoDb->getSchema();
-        $totalCountProp = $this->repoDb->getSchema()->searchCount;
+        $totalCountProp = (string)$this->repoDb->getSchema()->searchCount;
         try {
             $res = new \acdhOeaw\arche\lib\RepoResourceDb($resId, $this->repoDb);
         } catch (\Exception $ex) {
@@ -125,12 +125,6 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $scfg->orderByLang = $lang;
 
         $property = [
-            /*
-            'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
-            'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
-            'https://vocabs.acdh.oeaw.ac.at/schema#hasDerivedPublication',
-            $schema->dissService->parent,
-            */
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#relation',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#continues',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#isContinuedBy',
@@ -151,8 +145,6 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         ];
 
         $searchPhrase = '';
-        $t = microtime(true);
-
         list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $scfg, $property, $searchPhrase);
 
         $helper = new \Drupal\arche_core_gui_api\Helper\InverseTableHelper();
@@ -187,7 +179,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         if (empty($id)) {
             return new JsonResponse(array("Please provide an id"), 404, ['Content-Type' => 'application/json']);
         }
-
+        
         $result = [];
         $schema = $this->repoDb->getSchema();
         $scfg = new \acdhOeaw\arche\lib\SearchConfig();
@@ -223,10 +215,8 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         ];
 
         $searchPhrase = (isset($searchProps['search'])) ? $searchProps['search'] : "" ;
-        $t = microtime(true);
-
+        
         list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $scfg, $property, $searchPhrase);
-
         $helper = new \Drupal\arche_core_gui_api\Helper\InverseTableHelper();
         $result = $helper->extractinverseTableView($result, $lang);
         
