@@ -194,7 +194,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $scfg->orderByLang = $lang;
 
         $property = [
-            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
+            //(string)'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasDerivedPublication',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasSource',
