@@ -62,6 +62,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      */
     private function initialSearch(array $postParams): Response {
 
+       
         try {
             $this->setBasicPropertys($postParams);
             $search = $this->repoDb->getSmartSearch();
