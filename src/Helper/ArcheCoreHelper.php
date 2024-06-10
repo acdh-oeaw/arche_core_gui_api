@@ -138,8 +138,7 @@ class ArcheCoreHelper {
                 $this->isDirOrFile($v->resource);
             }
         } else {
-            $return[0] = array("uri" => 0, "text" => "There are no child elements",
-                "userAllowedToDL" => false, "dir" => false, "children" => false);
+            $return = array();
         }
         return $return;
     }

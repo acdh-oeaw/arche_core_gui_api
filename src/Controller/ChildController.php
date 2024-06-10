@@ -144,7 +144,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         if (count((array) $result) == 0) {
             return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
-
+       
         $response = new Response();
         $response->setContent(
                 json_encode(
