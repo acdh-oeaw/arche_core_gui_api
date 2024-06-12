@@ -145,11 +145,11 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         ];
 
         $searchPhrase = '';
-        list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $scfg, $property, $searchPhrase);
+        list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $scfg, $property, $searchPhrase, [new \acdhOeaw\arche\lib\SearchTerm(\zozlak\RdfConstants::RDF_TYPE, [$schema->classes->resource, $schema->classes->collection])]);
 
         $helper = new \Drupal\arche_core_gui_api\Helper\InverseTableHelper();
         $result = $helper->extractinverseTableView($result, $lang);
-        
+   
         if (count((array) $result) == 0) {
             return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }

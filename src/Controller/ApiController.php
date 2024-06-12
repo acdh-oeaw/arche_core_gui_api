@@ -66,10 +66,6 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->versionsList($identifier, $lang);
     }
 
-    public function versionsTree(string $identifier, string $lang = "en") {
-        $controller = new \Drupal\arche_core_gui_api\Controller\VersionsController();
-        return $controller->versionsTree($identifier, $lang);
-    }
 
     /**
      * The Child DataTable api endpoint

@@ -75,16 +75,6 @@ arche_core_api_coordinates:
         _permission: 'access content'
         _access: 'TRUE'    
         
-arche_core_api_versions_tree:    
-    path: '/api/versions-tree/{identifier}/{lang}'
-    defaults:
-        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::versionsTree'
-    requirements:
-        identifier: '^[^\?]*$'
-        lang: '^[^\?]*$'
-        _permission: 'access content'
-        _access: 'TRUE'           
-        
 arche_core_api_versions_list:    
     path: '/api/versions-list/{identifier}/{lang}'
     defaults:
@@ -93,7 +83,7 @@ arche_core_api_versions_list:
         identifier: '^[^\?]*$'
         lang: '^[^\?]*$'
         _permission: 'access content'
-        _access: 'TRUE'         
+        _access: 'TRUE'       
         
 arche_core_api_rpr_table:    
     path: '/api/rprDT/{identifier}/{lang}'

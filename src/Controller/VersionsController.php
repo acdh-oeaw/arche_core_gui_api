@@ -17,10 +17,12 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
     private $versions = [];
     private $resId;
     private $reverseArr = [];
+    protected $helper;
 
     public function __construct() {
         parent::__construct();
         $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
+        $this->helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
     }
 
     private function fetchChildElements($array) {
@@ -35,18 +37,24 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         }
     }
 
+    /**
+     * Get the resource versions List
+     * @param string $id
+     * @param string $lang
+     * @return JsonResponse
+     */
     public function versionsList(string $id, string $lang = "en") {
         $this->resId = $id;
         $result = [];
         $schema = $this->repoDb->getSchema();
 
         $context = [
-            (string)$schema->label => 'title',
-            (string)$schema->id => 'id',
-            (string)$schema->isNewVersionOf => 'prevVersion',
-            (string)$schema->ontology->version => 'version',
-            (string)$schema->creationDate => 'avDate',
-            (string)$schema->accessRestriction => 'accessRestriction'
+            (string) $schema->label => 'title',
+            (string) $schema->id => 'id',
+            (string) $schema->isNewVersionOf => 'prevVersion',
+            (string) $schema->ontology->version => 'version',
+            (string) $schema->creationDate => 'avDate',
+            (string) $schema->accessRestriction => 'accessRestriction'
         ];
 
         $result = $this->getVersions($id, $schema->isNewVersionOf, $context);
@@ -75,8 +83,8 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             'uri_dl' => $this->repoDb->getBaseUrl() . $result->repoid,
             'filename' => $avDate . ' - ' . $result->version[0]->value,
             'resShortId' => $result->repoid,
-            'title' => $result->title[0]->value.' - '.$result->version[0]->value,
-            'text' => $result->title[0]->value.' - '.$result->version[0]->value,
+            'title' => $result->title[0]->value . ' - ' . $result->version[0]->value,
+            'text' => $result->title[0]->value . ' - ' . $result->version[0]->value,
             'userAllowedToDL' => false,
             'dir' => false,
             'marked' => $marked,
@@ -122,7 +130,7 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             'filename' => $avDate . ' - ' . $version,
             'resShortId' => $io->repoid,
             'title' => $title,
-            'text' => $title. ' - ' . $version,
+            'text' => $title . ' - ' . $version,
             'userAllowedToDL' => false,
             'dir' => false,
             'marked' => $marked,
@@ -145,9 +153,6 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $outputArray[] = $newItem;
     }
 
-    public function versionsTree(string $id, string $lang = "en") {
-        
-    }
 
     private function getVersions(int $resId, string $prevVerProp, array $context): object {
 

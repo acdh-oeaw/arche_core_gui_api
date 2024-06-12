@@ -45,7 +45,7 @@ class InverseTableHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreHelp
      * @param string $lang
      * @return type
      */
-    protected function setDefaultTitle(array $obj, string $lang) {
+    protected function setDefaultTitle(array $obj, string $lang): string {
         if (array_key_exists($lang, $obj)) {
             return $obj[$lang]->value;
         } else {
@@ -59,4 +59,6 @@ class InverseTableHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreHelp
         }
         return reset($obj)->value;
     }
+    
+   
 }

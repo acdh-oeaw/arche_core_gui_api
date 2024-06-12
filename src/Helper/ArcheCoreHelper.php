@@ -337,9 +337,9 @@ class ArcheCoreHelper {
                     $tid = $triple->value;
                     $this->resources[$tid] ??= (object) ['id' => (int) $tid];
                     $this->resources[$id]->$property[$tid] = (object) $this->resources[$tid];
-                }elseif ($triple->type === 'ID') {
+                } elseif ($triple->type === 'ID') {
                     $this->resources[$id]->$property[$id][] = (object) $triple;
-                }else {
+                } else {
                     if (!($triple->lang)) {
                         $triple->lang = $lang;
                     }
@@ -349,15 +349,15 @@ class ArcheCoreHelper {
                 $this->resources[$id]->$property[$id][] = (object) $triple;
             }
         }
-       
+
         if (count($this->resources) < 1) {
             return new \stdClass();
         }
 
         $this->changePropertyToShortcut((string) $resId);
-       
+
         $this->setDefaultTitle($lang, $resId);
-        
+
         return $this->resources[(string) $resId];
     }
 
