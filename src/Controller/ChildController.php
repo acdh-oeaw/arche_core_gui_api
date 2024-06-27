@@ -132,7 +132,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         if ($searchProps['order'] === 'desc') {
             $orderby = '^';
         }
-        $searchCfg->orderBy = [$orderby . $schema->label];
+        $searchCfg->orderBy = [$orderby . (string)\zozlak\RdfConstants::RDF_TYPE => 'rdftype'];
         $searchCfg->orderByLang = $lang;
         //$searchPhrase = '170308';
         $searchPhrase = '';
