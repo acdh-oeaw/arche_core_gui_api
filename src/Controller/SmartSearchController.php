@@ -23,10 +23,16 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     private $searchInBinaries;
     private $searchPhrase;
     private $reqFacets;
+    private $dbStr = "pgsql: host=host.docker.internal port=5432 user=arche dbname=arche password=CT294DAhXo";
 
     public function __construct() {
         parent::__construct();
-        $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
+        if($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
+            $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config-gui.yaml');
+        } else {
+            $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
+        }
+        
     }
 
     private function setContext() {
@@ -95,7 +101,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      */
     private function removeCache() {
         try {
-            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
+            $pdo = new \PDO($this->dbStr);
             $query = $pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
             $query->execute([$this->sConfig->cacheTimeout]);
             $requestHash = md5(print_r($_POST, true));
@@ -297,11 +303,14 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
             // check for corner cases user should be warned about
             $messages = [];
-            foreach ($sConfig->warnings ?? [] as $i) {
+            foreach ($this->sConfig->warnings ?? [] as $i) {
                 $dataset = new \quickRdf\Dataset(false);
                 $sbj = DF::namedNode('subject');
+                
                 foreach ($this->reqFacets as $property => $values) {
+                
                     $values = is_array($values) ? $values : [$values];
+                   
                     $dataset->add(array_map(fn($x) => DF::Quad($sbj, DF::namedNode($property), DF::literal($x)), $values));
                 }
                 $outerMatch = true;
@@ -325,7 +334,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 }
             }
             if ($emptySearch) {
-                $msg = (array) $sConfig->emptySearchMessage;
+                $msg = (array) $this->sConfig->emptySearchMessage;
                 $messages[] = [
                     'message' => $msg[$facetsLang] ?? $msg['en'] ?? reset($msg),
                     'class' => 'bg-info',
@@ -338,7 +347,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'facets' => $facetStats,
                         'results' => $resources,
                         'totalCount' => $emptySearch ? -1 : $totalCount,
-                        'maxCount' => $emptySearch ? -1 : $sConfig->matchesLimit,
+                        'maxCount' => $emptySearch ? -1 : $this->sConfig->matchesLimit,
                         'page' => $page,
                         'pageSize' => $resourcesPerPage
                             ], \JSON_UNESCAPED_SLASHES));
@@ -354,7 +363,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
     private function cacheResults($requestHash, $result) {
         try {
-            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
+            $pdo = new \PDO($this->dbStr);
             $query = $pdo->prepare("INSERT INTO gui.search_cache VALUES (?, ?, now(), now())");
             $query->execute([$requestHash, $response]);
         } catch (\Throwable $e) {
@@ -385,9 +394,9 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         if (!empty($q)) {
             $this->sConfig = $this->aConfig->smartSearch;
             $limit = $this->sConfig->autocomplete?->count ?? 10;
-            $maxLength = $sConfig->autocomplete?->maxLength ?? 50;
+            $maxLength = $this->sConfig->autocomplete?->maxLength ?? 50;
 
-            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
+            $pdo = new \PDO($this->dbStr);
 
             $weights = array_filter($this->sConfig->facets, fn($x) => $x->type === 'matchProperty');
             $weights = reset($weights) ?: new stdClass();
