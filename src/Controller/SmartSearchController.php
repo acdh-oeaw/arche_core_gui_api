@@ -23,16 +23,16 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     private $searchInBinaries;
     private $searchPhrase;
     private $reqFacets;
-    private $dbStr = "pgsql: host=host.docker.internal port=5432 user=arche dbname=arche password=CT294DAhXo";
-
+    private $requestHash;
+    
     public function __construct() {
         parent::__construct();
-        if($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
+        if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
             $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config-gui.yaml');
         } else {
             $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
         }
-        
+        $this->requestHash = md5(print_r($_POST, true));
     }
 
     private function setContext() {
@@ -68,7 +68,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      */
     private function initialSearch(array $postParams): Response {
 
-       
+
         try {
             $this->setBasicPropertys($postParams);
             $search = $this->repoDb->getSmartSearch();
@@ -96,27 +96,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     /**
-     * Remove the facet cache
-     * @return string
-     */
-    private function removeCache() {
-        try {
-            $pdo = new \PDO($this->dbStr);
-            $query = $pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
-            $query->execute([$this->sConfig->cacheTimeout]);
-            $requestHash = md5(print_r($_POST, true));
-            $query = $pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response");
-            $query->execute([$requestHash]);
-            $result = $query->fetchColumn();
-            if ($result !== false) {
-                return $result;
-            }
-        } catch (\Throwable $e) {
-            return "";
-        }
-    }
-
-    /**
      * The main search 
      * @param array $postParams
      * @return Response
@@ -134,7 +113,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         try {
             $this->setBasicPropertys($postParams);
             $useCache = !((bool) ($postParams['noCache'] ?? false));
-
+ 
             if ($useCache) {
                 $cacheResult = $this->removeCache();
                 if (!empty($cacheResult)) {
@@ -306,11 +285,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             foreach ($this->sConfig->warnings ?? [] as $i) {
                 $dataset = new \quickRdf\Dataset(false);
                 $sbj = DF::namedNode('subject');
-                
+
                 foreach ($this->reqFacets as $property => $values) {
-                
+
                     $values = is_array($values) ? $values : [$values];
-                   
+
                     $dataset->add(array_map(fn($x) => DF::Quad($sbj, DF::namedNode($property), DF::literal($x)), $values));
                 }
                 $outerMatch = true;
@@ -341,7 +320,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 ];
             }
             if ($useCache) {
-                $this->cacheResults($requestHash, $result);
+                $this->cacheResults($result);
             }
             return new Response(json_encode([
                         'facets' => $facetStats,
@@ -360,15 +339,45 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         }
         return new Response(json_encode($result));
     }
-
-    private function cacheResults($requestHash, $result) {
+    
+    /**
+     * Cache the search results
+     * @param type $result
+     * @return bool
+     */
+    private function cacheResults($result): bool {
         try {
-            $pdo = new \PDO($this->dbStr);
+            $pdo = new \PDO($this->aConfig->dbConnStr);
             $query = $pdo->prepare("INSERT INTO gui.search_cache VALUES (?, ?, now(), now())");
-            $query->execute([$requestHash, $response]);
+            $query->execute([$this->requestHash, $result]);
+            $pdo = null;
         } catch (\Throwable $e) {
-            return "";
+            return false;
         }
+        
+        return true;
+    }
+    
+     /**
+     * Remove the facet cache
+     * @return string
+     */
+    private function removeCache(): bool {
+        try {
+            $pdo = new \PDO($this->aConfig->dbConnStr);
+            $query = $pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
+            $query->execute([$this->sConfig->cacheTimeout]);
+            $query = $pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response");
+            $query->execute([$this->requestHash]);
+            $result = $query->fetchColumn();
+            $pdo = null;
+            if ($result !== false) {
+                return false;
+            }
+        } catch (\Throwable $e) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -396,7 +405,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $limit = $this->sConfig->autocomplete?->count ?? 10;
             $maxLength = $this->sConfig->autocomplete?->maxLength ?? 50;
 
-            $pdo = new \PDO($this->dbStr);
+            $pdo = new \PDO($this->aConfig->dbConnStr);
 
             $weights = array_filter($this->sConfig->facets, fn($x) => $x->type === 'matchProperty');
             $weights = reset($weights) ?: new stdClass();
