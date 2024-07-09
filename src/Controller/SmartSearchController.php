@@ -120,9 +120,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             
             if ($useCache) {
                 $cacheResult = $this->removeCache();
-                if (!empty($cacheResult)) {
-                    return new Response(json_encode($cacheResult));
-                }
             }
 
             $this->setContext();
@@ -316,6 +313,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                     ];
                 }
             }
+            
             if ($emptySearch) {
                 $msg = (array) $this->sConfig->emptySearchMessage;
                 $messages[] = [
@@ -326,6 +324,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             if ($useCache) {
                 $this->cacheResults($resources);
             }
+            error_log("Response...");
+            if(!$msg) {
+                $msg['en'] = "";
+            }
+           
             return new Response(json_encode([
                         'facets' => $facetStats,
                         'results' => $resources,
@@ -357,7 +360,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $pdo = new \PDO($this->aConfig->dbConnStr->guest);
             $query = $pdo->prepare("INSERT INTO gui.search_cache VALUES (?, ?, now(), now())");
             $query->execute([$this->requestHash, $result]);
-            $pdo = null;
+           
             error_log("cacheResults done...");
         } catch (\Throwable $e) {
             return false;
@@ -382,7 +385,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $query->execute([$this->requestHash]);
             $result = $query->fetchColumn();
             error_log("removeCache done...");
-            $pdo = null;
             if ($result !== false) {
                 return false;
             }
