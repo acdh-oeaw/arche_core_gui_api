@@ -112,8 +112,12 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
         try {
             $this->setBasicPropertys($postParams);
-            $useCache = !((bool) ($postParams['noCache'] ?? false));
- 
+            $useCache = $postParams['noCache'] ? true : false;
+            
+            
+            error_log("CACHE::::::");
+            error_log($useCache);
+            
             if ($useCache) {
                 $cacheResult = $this->removeCache();
                 if (!empty($cacheResult)) {
@@ -320,7 +324,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 ];
             }
             if ($useCache) {
-                $this->cacheResults($result);
+                $this->cacheResults($resources);
             }
             return new Response(json_encode([
                         'facets' => $facetStats,
@@ -328,6 +332,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'totalCount' => $emptySearch ? -1 : $totalCount,
                         'maxCount' => $emptySearch ? -1 : $this->sConfig->matchesLimit,
                         'page' => $page,
+                        'messages' => $msg[$facetsLang] ?? $msg['en'] ?? reset($msg),
+                        'class'   => 'bg-' . $i->severity ?? 'bg-error',
                         'pageSize' => $resourcesPerPage
                             ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
@@ -346,11 +352,13 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      * @return bool
      */
     private function cacheResults($result): bool {
+        error_log("cacheResults done...");
         try {
-            $pdo = new \PDO($this->aConfig->dbConnStr);
+            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
             $query = $pdo->prepare("INSERT INTO gui.search_cache VALUES (?, ?, now(), now())");
             $query->execute([$this->requestHash, $result]);
             $pdo = null;
+            error_log("cacheResults done...");
         } catch (\Throwable $e) {
             return false;
         }
@@ -363,18 +371,24 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      * @return string
      */
     private function removeCache(): bool {
+        error_log("removeCache done...000");
         try {
-            $pdo = new \PDO($this->aConfig->dbConnStr);
+            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
             $query = $pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
             $query->execute([$this->sConfig->cacheTimeout]);
+            error_log("timeout: ");
+            error_log($this->sConfig->cacheTimeout);
             $query = $pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response");
             $query->execute([$this->requestHash]);
             $result = $query->fetchColumn();
+            error_log("removeCache done...");
             $pdo = null;
             if ($result !== false) {
                 return false;
             }
         } catch (\Throwable $e) {
+            error_log("reutn cache error:");
+            error_log(print_r($e, true));
             return false;
         }
         return true;
@@ -404,11 +418,10 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $this->sConfig = $this->aConfig->smartSearch;
             $limit = $this->sConfig->autocomplete?->count ?? 10;
             $maxLength = $this->sConfig->autocomplete?->maxLength ?? 50;
-
-            $pdo = new \PDO($this->aConfig->dbConnStr);
-
+          
+            $pdo = new \PDO((string)$this->aConfig->dbConnStr->guest);
             $weights = array_filter($this->sConfig->facets, fn($x) => $x->type === 'matchProperty');
-            $weights = reset($weights) ?: new stdClass();
+            $weights = reset($weights) ?: new \stdClass();
             $weights->weights ??= ['_' => 0.0];
             $weights->defaultWeight ??= 1.0;
 
