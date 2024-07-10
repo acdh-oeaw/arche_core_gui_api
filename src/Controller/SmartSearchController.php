@@ -112,8 +112,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
         try {
             $this->setBasicPropertys($postParams);
-            $useCache = $postParams['noCache'] ? true : false;
-            
+            $useCache = !((bool) ($postParams['noCache'] ?? false));
             
             error_log("CACHE::::::");
             error_log($useCache);
@@ -131,7 +130,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             ];
 
             // SEARCH CONFIG
-
             $facets = $this->sConfig->facets;
 
             if (!$postParams['linkNamedEntities'] ?? true) {
@@ -288,9 +286,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 $sbj = DF::namedNode('subject');
 
                 foreach ($this->reqFacets as $property => $values) {
-
                     $values = is_array($values) ? $values : [$values];
-
                     $dataset->add(array_map(fn($x) => DF::Quad($sbj, DF::namedNode($property), DF::literal($x)), $values));
                 }
                 $outerMatch = true;
@@ -363,6 +359,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
            
             error_log("cacheResults done...");
         } catch (\Throwable $e) {
+            error_log("cacehe result error::: ");
+            error_log(print_r($e, true));
             return false;
         }
         
@@ -389,7 +387,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 return false;
             }
         } catch (\Throwable $e) {
-            error_log("reutn cache error:");
+            error_log("remove cache error:");
             error_log(print_r($e, true));
             return false;
         }
