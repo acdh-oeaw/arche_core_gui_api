@@ -351,8 +351,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      */
     private function cacheResults($result): bool {
         try {
-            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
-            $query = $pdo->prepare("INSERT INTO gui.search_cache VALUES (?, ?, now(), now())");
+            $query = $this->pdo->prepare("INSERT INTO gui.search_cache VALUES (?, ?, now(), now())");
             $query->execute([$this->requestHash, $result]);
         } catch (\Throwable $e) {
             error_log("cacehe result error::: ");
@@ -369,8 +368,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      */
     private function getCachedData(): string {
         try {
-            $pdo = new \PDO($this->aConfig->dbConnStr->guest);
-            $query = $pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
+            $query = $this->pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
             $del = $query->execute([$this->sConfig->cacheTimeout]);
 
             $query = $pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response");
