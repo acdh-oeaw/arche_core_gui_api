@@ -99,7 +99,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      * @return Response
      */
     public function search(array $postParams): Response {
-
+         
         //if we do the empty search or reset filters then just load the facets
         if (isset($postParams['initialFacets'])) {
             return $this->initialSearch($postParams);
@@ -115,8 +115,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             if ($useCache) {
                 $cached = $this->getCachedData();
                 //if we have already stored cache
-                if ($cached !== "") {
-                    return new Response($cached);
+                if ($cached !== "") {                  
+                    //return new Response($cached);
                 }
             }
 
@@ -128,9 +128,10 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 (string) $this->schema->parent => 'parent',
             ];
 
+            
             // SEARCH CONFIG
             $facets = $this->sConfig->facets;
-
+            
             if (!$postParams['linkNamedEntities'] ?? true) {
                 $facets = array_filter($facets, fn($x) => $x->type !== 'linkProperty');
             }
@@ -140,9 +141,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $spatialSearchTerms = null;
             $allowedProperties = [];
             $facetsInUse = [];
+            
             foreach ($facets as $facet) {
                 $fid = in_array($facet->type, $specialFacets) ? $facet->type : $facet->property;
                 if (is_array($this->reqFacets[$fid] ?? null) || isset($this->reqFacets[$fid]) && $fid === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
+                
                     $facetsInUse[] = $fid;
                     $reqFacet = $this->reqFacets[$fid];
                     if ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_LINK) {
@@ -175,7 +178,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         }
                         $facet->distribution = (bool) ($this->reqFacets[$fid]['distribution'] ?? false);
                     } elseif ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
-                        $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacet, operator: '&&');
+                         $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacet, operator: '&&');
+                       
                     } elseif (count($reqFacet) > 0) {
                         $type = $facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_OBJECT ? \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION : null;
                         $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm($fid, array_values($reqFacet), type: $type);
@@ -183,11 +187,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 }
             }
             unset($facet);
-
-            $spatialSearchTerm = null;
-            if (isset($this->reqFacets['bbox'])) {
-                $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $this->reqFacets['bbox'], operator: '&&');
-            }
 
             $search = $this->repoDb->getSmartSearch();
             if (file_exists($this->sConfig->log)) {
@@ -205,6 +204,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             // display distribution of defined facets
             $facetsLang = !empty($postParams['labelsLang']) ? $postParams['labelsLang'] : (!empty($postParams['preferredLang']) ? $postParams['preferredLang'] : ($this->sConfig->prefLang ?? 'en'));
             $emptySearch = empty($this->searchPhrase) && count($searchTerms) === 0 && $spatialSearchTerm === null && count($searchIn) === 0;
+            
             if ($emptySearch) {
                 $facetStats = $search->getInitialFacets($facetsLang, $this->sConfig->facetsCache);
             } else {
@@ -319,6 +319,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             if (!$msg) {
                 $msg['en'] = "";
             }
+            
 
             $fullresponse = json_encode([
                 'facets' => $facetStats,
@@ -371,7 +372,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $query = $this->pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
             $del = $query->execute([$this->sConfig->cacheTimeout]);
 
-            $query = $pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response");
+            $query = $this->pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response");
             $query->execute([$this->requestHash]);
             $result = $query->fetchColumn();
             if ($result !== false) {
