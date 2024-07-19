@@ -139,6 +139,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $specialFacets = [\acdhOeaw\arche\lib\SmartSearch::FACET_MAP, \acdhOeaw\arche\lib\SmartSearch::FACET_LINK, \acdhOeaw\arche\lib\SmartSearch::FACET_MATCH];
             $searchTerms = [];
             $spatialSearchTerms = null;
+            $spatialSearchTerm = null;
             $allowedProperties = [];
             $facetsInUse = [];
             
