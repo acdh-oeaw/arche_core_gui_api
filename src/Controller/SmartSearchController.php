@@ -116,7 +116,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 $cached = $this->getCachedData();
                 //if we have already stored cache
                 if ($cached !== "") {                  
-                    //return new Response($cached);
+                    return new Response($cached);
                 }
             }
 
