@@ -17,7 +17,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     private $aConfig;
     private $sConfig;
     private $context = [];
-    protected $schema;
+    private $schema;
     private $baseUrl;
     private $preferredLang;
     private $searchInBinaries;
