@@ -3,6 +3,9 @@
 namespace Drupal\arche_core_gui_api\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use acdhOeaw\arche\lib\Config;
+use acdhOeaw\arche\lib\RepoDb;
+use acdhOeaw\arche\lib\schema\Ontology;
 
 /**
  * Description of ArcheBaseController
@@ -10,9 +13,9 @@ use Drupal\Core\Controller\ControllerBase;
  * @author nczirjak
  */
 class ArcheBaseController extends ControllerBase {
-
-    protected $config;
-    protected $repoDb;
+    protected Config $config;
+    protected RepoDb $repoDb;
+    protected Ontology $ontology;
     protected $siteLang;
     protected $helper;
     protected $model;
@@ -21,9 +24,9 @@ class ArcheBaseController extends ControllerBase {
 
         (isset($_SESSION['language'])) ? $this->siteLang = strtolower($_SESSION['language']) : $this->siteLang = "en";
         if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
-            $this->config = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config-gui.yaml');
+            $this->config = Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config-gui.yaml');
         } else {
-            $this->config = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
+            $this->config = Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
         }
 
         try {
@@ -32,7 +35,8 @@ class ArcheBaseController extends ControllerBase {
             $schema = new \acdhOeaw\arche\lib\Schema($this->config->schema);
             $headers = new \acdhOeaw\arche\lib\Schema($this->config->rest->headers);
             $nonRelProp = $this->config->metadataManagment->nonRelationProperties ?? [];
-            $this->repoDb = new \acdhOeaw\arche\lib\RepoDb($baseUrl, $schema, $headers, $this->pdo, $nonRelProp);
+            $this->repoDb = new RepoDb($baseUrl, $schema, $headers, $this->pdo, $nonRelProp);
+            $this->ontology = new Ontology($pdo, $schema, $config->ontologyCacheFile, $config->ontologyCacheTtl);
         } catch (\Exception $ex) {
             \Drupal::messenger()->addWarning($this->t('Error during the BaseController initialization!') . ' ' . $ex->getMessage());
             return array();
