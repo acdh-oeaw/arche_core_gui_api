@@ -68,7 +68,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $result = $helper->extractChildView($result, ['id', 'title', 'class', 'avDate'], $totalCount, $this->repoDb->getBaseUrl(), $lang);
 
         if (count((array) $result) == 0) {
-            return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
+            return new Response(json_encode("There is no content"), 200, ['Content-Type' => 'application/json']);
         }
 
         $response = new Response();
@@ -142,15 +142,11 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $result = $helper->extractChildTreeView($result, $totalCount, $this->repoDb->getBaseUrl(), $lang);
 
         if (count((array) $result) == 0) {
-            return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
+            return new Response(json_encode("There is no content"), 200, ['Content-Type' => 'application/json']);
         }
        
         $response = new Response();
-        $response->setContent(
-                json_encode(
-                        (array) $result
-                )
-        );
+        $response->setContent(json_encode((array) $result));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
