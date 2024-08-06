@@ -18,6 +18,11 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
     }
 
+    /**
+     * MAP search coorindates
+     * @param string $lang
+     * @return JsonResponse
+     */
     public function getSearchCoordinates(string $lang = "en"): JsonResponse {
         $result = [];
 
@@ -53,6 +58,12 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
     }
 
+    /**
+     * Datatable top collections api endpoint
+     * @param array $searchProps
+     * @param string $lang
+     * @return JsonResponse
+     */
     public function getTopCollectionsDT(array $searchProps, string $lang = "en"): JsonResponse {
 
         $result = [];
@@ -159,7 +170,13 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
         return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
     }
-
+    
+    /**
+     * Get the actual resource breadcrumb
+     * @param string $id
+     * @param string $lang
+     * @return JsonResponse
+     */
     public function getBreadcrumb(string $id, string $lang = "en") {
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
@@ -199,6 +216,12 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
     }
 
+    /**
+     * Metadata view expert DT content
+     * @param string $id
+     * @param string $lang
+     * @return JsonResponse
+     */
     public function getExpertData(string $id, string $lang = "en") {
 
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));

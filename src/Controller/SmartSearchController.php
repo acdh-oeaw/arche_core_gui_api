@@ -106,7 +106,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         }
         //we are generating the hash for the DB request store process
         $this->requestHash = md5(print_r($postParams, true));
-
+        $msg = [];
         try {
             $this->setBasicPropertys($postParams);
             $useCache = !((bool) ($postParams['noCache'] ?? false));
