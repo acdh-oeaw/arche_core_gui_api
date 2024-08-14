@@ -82,11 +82,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                         'maxCount' => -1
                             ], \JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
-            return new Response("Error in search! " . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
+            return new Response(t("Error in search!") . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
         }
 
         if ($object === false) {
-            return new Response("There is no resource", 404, ['Content-Type' => 'application/json']);
+            return new Response(t("There is no resource"), 404, ['Content-Type' => 'application/json']);
         }
 
 

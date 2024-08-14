@@ -95,7 +95,7 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             "children" => $prevArr);
 
         if (count((array) $this->versions) == 0) {
-            return new JsonResponse(array("There is no resource"), 404, ['Content-Type' => 'application/json']);
+            return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
         }
 
         return new JsonResponse($this->versions, 200, ['Content-Type' => 'application/json']);

@@ -29,7 +29,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
         if (empty($id)) {
-            return new JsonResponse(array("Please provide an id"), 404, ['Content-Type' => 'application/json']);
+            return new JsonResponse(array(t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
         }
 
         $result = [];
@@ -68,7 +68,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $result = $helper->extractChildView($result, ['id', 'title', 'class', 'avDate'], $totalCount, $this->repoDb->getBaseUrl(), $lang);
 
         if (count((array) $result) == 0) {
-            return new Response(json_encode("There is no content"), 200, ['Content-Type' => 'application/json']);
+            return new Response(json_encode(t("There is no content")), 200, ['Content-Type' => 'application/json']);
         }
 
         $response = new Response();
@@ -103,7 +103,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
         if (empty($id)) {
-            return new JsonResponse(array("Please provide an id"), 404, ['Content-Type' => 'application/json']);
+            return new JsonResponse(array(t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
         }
 
         $result = [];
@@ -142,7 +142,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $result = $helper->extractChildTreeView($result, $totalCount, $this->repoDb->getBaseUrl(), $lang);
 
         if (count((array) $result) == 0) {
-            return new Response(json_encode("There is no content"), 200, ['Content-Type' => 'application/json']);
+            return new Response(json_encode(t("There is no content")), 200, ['Content-Type' => 'application/json']);
         }
        
         $response = new Response();

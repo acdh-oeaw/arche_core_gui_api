@@ -108,7 +108,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
         if (empty($id)) {
-            return new JsonResponse(array("Please provide an id"), 404, ['Content-Type' => 'application/json']);
+            return new JsonResponse(array(t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
         }
 
         $result = [];
@@ -151,7 +151,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $result = $helper->extractinverseTableView($result, $lang);
    
         if (count((array) $result) == 0) {
-            return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
+            return new Response(json_encode(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
         }
 
         $response = new Response();
@@ -177,7 +177,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
         if (empty($id)) {
-            return new JsonResponse(array("Please provide an id"), 404, ['Content-Type' => 'application/json']);
+            return new JsonResponse(array(t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
         }
         
         $result = [];
@@ -221,7 +221,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $result = $helper->extractinverseTableView($result, $lang);
         
         if (count((array) $result) == 0) {
-            return new Response(json_encode("There is no resource"), 404, ['Content-Type' => 'application/json']);
+            return new Response(json_encode(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
         }
 
         $response = new Response();
