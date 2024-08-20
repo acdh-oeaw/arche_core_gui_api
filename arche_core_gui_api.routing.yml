@@ -8,15 +8,6 @@ arche_api_topcollections:
     _permission: 'access content'
     _access: 'TRUE'
 
-arche_api_metadata:
-  path: '/api/metadata/{identifier}'
-  defaults:
-    _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::metadata'
-  requirements:
-    identifier: '^[^\?]*$'
-    _permission: 'access content'
-    _access: 'TRUE'      
-
 arche_core_api_expert:    
   path: '/api/expert/{id}/{lang}'
   defaults:

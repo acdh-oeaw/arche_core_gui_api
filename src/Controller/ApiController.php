@@ -33,13 +33,6 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getTopCollectionsDT($this->setProps(), $lang);
     }
 
-    public function metadata(string $identifier) {
-        //METADATA API
-        //CACHE THE METADATA
-        echo $identifier;
-        return [];
-    }
-
     /**
      * Get all metadata for the given resource
      * @param string $id

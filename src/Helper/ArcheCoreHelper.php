@@ -208,6 +208,9 @@ class ArcheCoreHelper {
      * @param type $v
      */
     private function isPublic(&$v): void {
+        if (!isset($v->accessRestriction)) {
+            $v->accessRestriction = 'public';
+        }
         if ($v->accessRestriction == 'public') {
             $v->userAllowedToDL = true;
         } else {
