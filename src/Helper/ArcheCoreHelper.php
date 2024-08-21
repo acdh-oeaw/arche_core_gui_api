@@ -310,7 +310,7 @@ class ArcheCoreHelper {
             $id = (string) $triple->id;
             $this->resources[$id] ??= (object) ['id' => (int) $id];
 
-            if ($triple->id !== $resId && isset($contextRelatives[$triple->property])) {
+            if ($triple->id !== $resId && isset($contextRelatives[$triple->property])) {                
                 $property = $contextRelatives[$triple->property];
                 $relvalues = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
 
@@ -334,19 +334,27 @@ class ArcheCoreHelper {
                 $this->resources[$id]->repoid = $id;
             } elseif ($triple->id === $resId) {
                 $property = $triple->property;
+                
 
                 if ($triple->type === 'REL') {
+                    
                     $relArr[$triple->value]['id'] = $triple->value;
                     $tid = $triple->value;
                     $this->resources[$tid] ??= (object) ['id' => (int) $tid];
                     $this->resources[$id]->$property[$tid] = (object) $this->resources[$tid];
+                    
                 } elseif ($triple->type === 'ID') {
+                    $this->resources[$id]->$property[$id][] = (object) $triple;
+                } elseif ($triple->type === 'http://www.w3.org/2001/XMLSchema#anyURI') {
                     $this->resources[$id]->$property[$id][] = (object) $triple;
                 } else {
                     if (!($triple->lang)) {
                         $triple->lang = $lang;
                     }
-                    $this->resources[$id]->$property[$id] = (object) $triple;
+                   
+                    if($triple->lang === $lang) {
+                        $this->resources[$id]->$property[$id] = (object) $triple;
+                    }
                 }
             } elseif ($triple->property === 'ID') {
                 $this->resources[$id]->$property[$id][] = (object) $triple;
@@ -360,7 +368,7 @@ class ArcheCoreHelper {
         $this->changePropertyToShortcut((string) $resId);
 
         $this->setDefaultTitle($lang, $resId);
-
+      
         return $this->resources[(string) $resId];
     }
 
