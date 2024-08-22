@@ -305,6 +305,7 @@ class ArcheCoreHelper {
     public function extractExpertView(object $pdoStmt, int $resId, array $contextRelatives, string $lang = "en"): object {
         $this->resources = [(string) $resId => (object) ['id' => $resId, 'language' => $lang]];
         $relArr = [];
+       
         while ($triple = $pdoStmt->fetchObject()) {
 
             $id = (string) $triple->id;
@@ -323,11 +324,12 @@ class ArcheCoreHelper {
                     } else {
                         //if the lang is different then we add it to the titles arr
                         $this->resources[$id]->titles[$relvalues->lang] = $relvalues->value;
+                        $this->resources[$id]->value = $relvalues->value;                        
                     }
                 }
 
                 if ($property === 'class') {
-                    $this->resources[$id]->property = $relvalues->value;
+                    $this->resources[$id]->property[$lang] = $relvalues->value;
                 }
 
                 $this->resources[$id]->type = "REL";
@@ -335,29 +337,29 @@ class ArcheCoreHelper {
             } elseif ($triple->id === $resId) {
                 $property = $triple->property;
                 
-
                 if ($triple->type === 'REL') {
-                    
                     $relArr[$triple->value]['id'] = $triple->value;
                     $tid = $triple->value;
                     $this->resources[$tid] ??= (object) ['id' => (int) $tid];
-                    $this->resources[$id]->$property[$tid] = (object) $this->resources[$tid];
+                    $this->resources[$id]->$property[$tid][$lang] = (object) $this->resources[$tid];
                     
                 } elseif ($triple->type === 'ID') {
-                    $this->resources[$id]->$property[$id][] = (object) $triple;
+                    $this->resources[$id]->$property[$id][$lang][] = (object) $triple;
                 } elseif ($triple->type === 'http://www.w3.org/2001/XMLSchema#anyURI') {
-                    $this->resources[$id]->$property[$id][] = (object) $triple;
+                    $this->resources[$id]->$property[$id][$lang][] = (object) $triple;
                 } else {
                     if (!($triple->lang)) {
                         $triple->lang = $lang;
                     }
-                   
-                    if($triple->lang === $lang) {
-                        $this->resources[$id]->$property[$id] = (object) $triple;
+                    if($triple->lang === $lang ) {
+                        $this->resources[$id]->$property[$id][$lang][] = (object) $triple;
+                    } else {
+                        $this->resources[$id]->$property[$id][$triple->lang][]= (object) $triple;
                     }
+                    
                 }
             } elseif ($triple->property === 'ID') {
-                $this->resources[$id]->$property[$id][] = (object) $triple;
+                $this->resources[$id]->$property[$id][$lang][] = (object) $triple;
             }
         }
 
@@ -366,9 +368,8 @@ class ArcheCoreHelper {
         }
 
         $this->changePropertyToShortcut((string) $resId);
-
-        $this->setDefaultTitle($lang, $resId);
-      
+        $this->setDefaultTitle($lang, $resId);        
+       
         return $this->resources[(string) $resId];
     }
 
