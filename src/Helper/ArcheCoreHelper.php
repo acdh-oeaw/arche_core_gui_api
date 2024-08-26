@@ -321,7 +321,7 @@ class ArcheCoreHelper {
                         $this->resources[$id]->relvalue = $relvalues->value;
                         $this->resources[$id]->value = $relvalues->value;
                         $this->resources[$id]->lang = $lang;
-                    }} elseif (!isset($this->resources[$id]->value)) {
+                    } elseif (!isset($this->resources[$id]->value)) {
                         //if the lang is different then we add it to the titles arr
                         $this->resources[$id]->titles[$relvalues->lang] = $relvalues->value;
                         $this->resources[$id]->value = $relvalues->value;       
