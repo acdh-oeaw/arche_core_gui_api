@@ -17,7 +17,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     private $aConfig;
     private $sConfig;
     private $context = [];
-    protected $schema;
+    protected \acdhOeaw\arche\lib\Schema $schema;
     private $baseUrl;
     private $preferredLang;
     private $searchInBinaries;
@@ -27,11 +27,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
     public function __construct() {
         parent::__construct();
-        if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
-            $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config-gui.yaml');
-        } else {
-            $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
-        }
+        $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
     }
 
     private function setContext() {
@@ -99,7 +95,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      * @return Response
      */
     public function search(array $postParams): Response {
-         
         //if we do the empty search or reset filters then just load the facets
         if (isset($postParams['initialFacets'])) {
             return $this->initialSearch($postParams);
@@ -127,7 +122,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 (string) $this->schema->label => 'title',
                 (string) $this->schema->parent => 'parent',
             ];
-
             
             // SEARCH CONFIG
             $facets = $this->sConfig->facets;
@@ -356,8 +350,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $query = $this->pdo->prepare("INSERT INTO gui.search_cache VALUES (?, ?, now(), now())");
             $query->execute([$this->requestHash, $result]);
         } catch (\Throwable $e) {
-            error_log("cacehe result error::: ");
-            error_log(print_r($e, true));
             return false;
         }
 
@@ -380,8 +372,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 return $result;
             }
         } catch (\Throwable $e) {
-            error_log("remove cache error:");
-            error_log(print_r($e, true));
             return "";
         }
         return "";
