@@ -103,7 +103,14 @@ arche_core_api_smart_search:
     requirements:
         _permission: 'access content'
         _access: 'TRUE'      
-        
+
+arche_core_api_vcr:    
+    path: '/api/vcr'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::vcr'
+    requirements:
+        _permission: 'access content'
+        _access: 'TRUE'            
 
 arche_core_api_search_date_facets:    
     path: '/api/smartSearchDateFacet'
