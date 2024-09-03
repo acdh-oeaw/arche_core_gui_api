@@ -289,7 +289,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         // if the resource has the acdh:hasNextItem, return children based on it 
         if (count($resources[(string) $resId]->nextItem ?? []) > 0) {
             $children = [];
-            $queue = new SplQueue();
+            $queue = new \SplQueue();
             array_map(fn($x) => $queue->push($x), $resources[(string) $resId]->nextItem);
             while (count($queue) > 0) {
                 $next = $queue->shift();
@@ -301,7 +301,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         }
         // if the resource has no acdh:hasNextItem, fallback to acdh:isPartOf 
         unset($context[(string) $schema->nextItem]);
-        $searchCfg = new SearchConfig();
+        $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
         $searchCfg->metadataMode = '0_0_0_0';
         $searchCfg->resourceProperties = array_keys($context);
         $searchTerm = new \acdhOeaw\arche\lib\SearchTerm($schema->parent, $this->repoDb->getBaseUrl() . $resId, type: \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION);
