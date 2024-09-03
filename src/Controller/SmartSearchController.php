@@ -14,7 +14,6 @@ use termTemplates\PredicateTemplate as PT;
  */
 class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseController {
 
-    private $aConfig;
     private $sConfig;
     private $context = [];
     protected \acdhOeaw\arche\lib\Schema $schema;
@@ -27,7 +26,6 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
     public function __construct() {
         parent::__construct();
-        $this->aConfig = \acdhOeaw\arche\lib\Config::fromYaml(\Drupal::service('extension.list.module')->getPath('arche_core_gui') . '/config/config.yaml');
     }
 
     private function setContext() {
@@ -47,9 +45,9 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
     }
 
     private function setBasicPropertys(array $postParams) {
-        $this->sConfig = $this->aConfig->smartSearch;
-        //$this->schema = new \acdhOeaw\arche\lib\Schema($this->aConfig->schema);
-        $this->baseUrl = $this->aConfig->rest->urlBase . $this->aConfig->rest->pathBase;
+        $this->sConfig = $this->config->smartSearch;
+        //$this->schema = new \acdhOeaw\arche\lib\Schema($this->config->schema);
+        $this->baseUrl = $this->repoDb->getBaseUrl();
         $this->preferredLang = $postParams['preferredLang'] ?? $this->sConfig->prefLang ?? 'en';
         $this->searchInBinaries = $postParams['includeBinaries'] ?? false;
         $this->searchPhrase = $postParams['q'] ?? "";
@@ -382,7 +380,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      */
     public function dateFacets(): Response {
         try {
-            return new Response(json_encode($this->aConfig->smartSearch->dateFacets));
+            return new Response(json_encode($this->config->smartSearch->dateFacets));
         } catch (Throwable $e) {
             return new Response("", 404, ['Content-Type' => 'application/json']);
         }
@@ -397,11 +395,10 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $response = [];
         $q = $str ?? '';
         if (!empty($q)) {
-            $this->sConfig = $this->aConfig->smartSearch;
+            $this->sConfig = $this->config->smartSearch;
             $limit = $this->sConfig->autocomplete?->count ?? 10;
             $maxLength = $this->sConfig->autocomplete?->maxLength ?? 50;
 
-            $pdo = new \PDO((string) $this->aConfig->dbConnStr->guest);
             $weights = array_filter($this->sConfig->facets, fn($x) => $x->type === 'matchProperty');
             $weights = reset($weights) ?: new \stdClass();
             $weights->weights ??= ['_' => 0.0];
@@ -426,7 +423,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $query->param[] = $maxLength;
             $query->param[] = $weights->defaultWeight;
             $query->param[] = $limit;
-            $pdoStmnt = $pdo->prepare($query->query);
+            $pdoStmnt = $this->pdo->prepare($query->query);
             $pdoStmnt->execute($query->param);
             $response = $pdoStmnt->fetchAll(\PDO::FETCH_COLUMN);
 
