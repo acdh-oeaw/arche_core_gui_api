@@ -127,15 +127,16 @@ class ArcheCoreHelper {
         return $return;
     }
 
-    public function extractChildTreeView(array $result, string $totalCount, string $baseUrl, string $lang = "en"): array {
+    public function extractChildTreeView(array $result, string $baseUrl, string $lang = "en"): array {
         $return = [];
 
         if (count($result) > 0) {
             foreach ($result as $k => $v) {
-                $return[$k] = $v->resource;
-                $this->createBaseProperties($v->resource, $baseUrl, $lang);
-                $this->isPublic($v->resource);
-                $this->isDirOrFile($v->resource);
+               
+                $return[$k] = $v;
+                $this->createBaseProperties($v, $baseUrl, $lang);
+                $this->isPublic($v);
+                $this->isDirOrFile($v);
             }
         } else {
             $return = array();
@@ -151,6 +152,7 @@ class ArcheCoreHelper {
     private function createBaseProperties(&$v, string $baseUrl, string $lang): void {
         $v->uri = $v->id;
         $v->uri_dl = $baseUrl . $v->id;
+        
         $v->text = $this->setTripleValueTitle($v->title, $lang);
         $v->resShortId = $v->id;
 
@@ -160,8 +162,10 @@ class ArcheCoreHelper {
         if (isset($v->avDate)) {
             $v->avDate = $this->setTripleValueTitle($v->avDate, $lang);
         }
-
-        $v->rdftype = $this->setTripleValueTitle($v->rdftype, $lang);
+       
+        $v->rdftype = $v->class;
+        //$v->rdftype = $this->setTripleValueTitle($v->class, $lang, 'rdftype');
+       
         $v->title = $this->setTripleValueTitle($v->title, $lang);
 
         $v->encodedUri = $baseUrl . $v->id;
@@ -169,38 +173,10 @@ class ArcheCoreHelper {
     }
 
     protected function setTripleValueTitle(array $triple, string $lang): string {
-
-        foreach ($triple as $obj) {
-            if (isset($obj->value)) {
-                if (strpos($obj->lang, $lang) !== false) {
-                    return $obj->value;
-                } elseif ($lang === "en" && (strpos($obj->lang, 'de') !== false)) {
-                    return $obj->value;
-                } elseif ($lang === "de" && (strpos($obj->lang, 'en') !== false)) {
-                    return $obj->value;
-                } elseif ((strpos($obj->lang, 'und') !== false)) {
-                    return $obj->value;
-                } else {
-                    return $obj->value;
-                }
-            }
-            if (isset($obj->title)) {
-
-                if (array_key_exists($lang, $obj->title)) {
-                    return $obj->title[$lang]->value;
-                } elseif ($lang === "en" && (array_key_exists('de', $obj->title))) {
-                    return $obj->title['de']->value;
-                } elseif ($lang === "de" && (array_key_exists('en', $obj->title))) {
-                    return $obj->title['en']->value;
-                } elseif ($o->lang === 'und') {
-                    return $obj->title['und']->value;
-                } else {
-                    $fo = reset($obj->title); // Get the first element of the array
-                    return $fo->value;
-                }
-            }
-        }
-        return "";
+        if(isset($triple[$lang])) {
+            return $triple[$lang];
+        } 
+        return reset($triple);
     }
 
     /**
