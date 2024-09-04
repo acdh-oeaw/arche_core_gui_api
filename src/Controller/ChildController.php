@@ -216,7 +216,6 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
             $id = (string) $triple->id;
             $shortProperty = $context[$triple->property] ?? false;
             $property = $shortProperty ?: $triple->property;
-
             $resources[$id] ??= (object) ['id' => $id];
 
             if ($triple->type === 'REL') {
@@ -276,7 +275,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
             }
 
             $resources[$id] ??= (object) ['id' => $id];
-            if ($triple->type === 'REL') {
+            if ($shortProperty === 'nextItem') { 
                 $tid = (string) $triple->value;
                 $resources[$tid] ??= (object) ['id' => $tid];
                 $resources[$id]->{$shortProperty}[] = $resources[$tid];
