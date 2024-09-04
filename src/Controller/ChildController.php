@@ -28,6 +28,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
      * @param string $lang
      * @return Response
      */
+    /*
     public function getChildData(string $id, array $searchProps, string $lang): Response {
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
@@ -68,7 +69,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $searchCfg, $property, $searchPhrase);
 
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractChildView($result, ['id', 'title', 'class', 'avDate'], $totalCount, $this->repoDb->getBaseUrl(), $lang);
+        $result = $helper->extractChildView($result, ['id', 'title', 'class'], $totalCount, $this->repoDb->getBaseUrl(), $lang);
 
         if (count((array) $result) == 0) {
             return new Response(json_encode($this->t("There is no content")), 200, ['Content-Type' => 'application/json']);
@@ -94,7 +95,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
 
         return $response;
     }
-
+*/
     /**
      * Child tree view API
      * @param string $id
@@ -115,20 +116,20 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
 
         $resContext = [
             (string) $schema->label => 'title',
-            (string) \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
-            (string) $schema->creationDate => 'avDate',
+         //   (string) \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
+            //(string) $schema->creationDate => 'avDate',
             (string) $schema->id => 'identifier',
             (string) $schema->accessRestriction => 'accessRestriction',
             (string) $schema->binarySize => 'binarysize',
             (string) $schema->fileName => 'filename',
             (string) $schema->ingest->location => 'locationpath'
         ];
-
+        /*
         $relContext = [
             (string) $schema->label => 'title',
             \zozlak\RdfConstants::RDF_TYPE => 'rdftype'
         ];
-       
+*/
         $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
         //$searchCfg->offset = $searchProps['offset'];
         //$searchCfg->limit = $searchProps['limit'];
@@ -141,13 +142,11 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $searchCfg->orderByLang = $lang;
         //$searchPhrase = '170308';
         $searchPhrase = '';
-        //list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $searchCfg, $property, $searchPhrase);
-        //list($result, $totalCount) = $this->getChildren($id, $relContext, $orderby, $lang );
-   $result = $this->getChildren($id, $resContext, $orderby, $lang );
-       
+        $result = $this->getChildren($id, $resContext, $orderby, $lang);
+        
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractChildTreeView((array)$result, $this->repoDb->getBaseUrl(), $lang);
-
+        $result = $helper->extractChildTreeView((array) $result, $this->repoDb->getBaseUrl(), $lang);
+       
         if (count((array) $result) == 0) {
             return new Response(json_encode(t("There is no content")), 200, ['Content-Type' => 'application/json']);
         }
@@ -160,94 +159,13 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
     }
 
     /**
-     * Get the inverse data of a resource
+     * Fetch the children data
      * @param int $resId
-     * @param array $resContext
-     * @param array $relContext
-     * @param \acdhOeaw\arche\lib\SearchConfig|null $searchCfg
-     * @param string|array|null $properties
-     * @param string $searchPhrase
-     * @param array $searchTerms
+     * @param array $context
+     * @param string $orderBy
+     * @param string $orderByLang
      * @return array
      */
-    private function getInverse(
-            int $resId,
-            array $resContext, // RDF properties to object properties mapping for the inverse resources
-            array $relContext = [], // RDF properties to object properties mapping for other resource
-            ?\acdhOeaw\arche\lib\SearchConfig $searchCfg = null, // specify ordering and paging here
-            string|array|null $properties = null, // allowed reverse property(ies); if null, all are fetched
-            string $searchPhrase = '', // search phrase for narrowing the results; search is performed only in properties listed in the $context
-            array $searchTerms = [] // any other search terms
-    ): array {
-        $properties = is_string($properties) ? [$properties] : $properties;
-
-        $schema = $this->repoDb->getSchema();
-        $totalCountProp = (string) $this->repoDb->getSchema()->searchCount;
-        try {
-            $res = new \acdhOeaw\arche\lib\RepoResourceDb($resId, $this->repoDb);
-        } catch (\Exception $ex) {
-            return [];
-        }
-
-        $resId = (string) $resId;
-
-        $searchCfg ??= new \acdhOeaw\arche\lib\SearchConfig();
-        $searchCfg->metadataMode = count($relContext) > 0 ? '0_0_1_0' : 'resource';
-        if (is_array($properties)) {
-            $searchCfg->resourceProperties = array_merge(array_keys($resContext), $properties);
-        }
-        if (count($relContext) > 0) {
-            $searchCfg->relativesProperties = array_keys($relContext);
-        }
-
-        $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm($properties, $res->getUri(), type: \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION);
-        if (!empty($searchPhrase)) {
-            $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm(array_keys($resContext), $searchPhrase, '~');
-        }
-        $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms($searchTerms, $searchCfg);
-        $relations = [];
-        $resources = [];
-        $context = array_merge($relContext, $resContext);
-        $context[(string) $schema->searchOrder] = 'searchOrder';
-        $context[(string) $schema->searchOrderValue . '1'] = 'searchValue';
-        $totalCount = null;
-        while ($triple = $pdoStmt->fetchObject()) {
-            $triple->value ??= '';
-            $id = (string) $triple->id;
-            $shortProperty = $context[$triple->property] ?? false;
-            $property = $shortProperty ?: $triple->property;
-            $resources[$id] ??= (object) ['id' => $id];
-
-            if ($triple->type === 'REL') {
-                if ($triple->value === $resId && ($properties === null || in_array($triple->property, $properties))) {
-                    $relations[] = (object) [
-                                'property' => $property,
-                                'resource' => $resources[$id],
-                    ];
-                } elseif ($triple->value !== $resId && $shortProperty) {
-                    $tid = (string) $triple->value;
-                    $resources[$tid] ??= (object) ['id' => $tid];
-                    $resources[$id]->{$shortProperty}[] = $resources[$tid];
-                }
-            } elseif ($shortProperty) {
-                $tripleVal = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
-                if ($shortProperty === "searchOrder") {
-                    $resources[$id]->{$shortProperty}[] = $tripleVal;
-                } else {
-                    $tLang = (isset($tripleVal->lang)) ? $tripleVal->lang : $triple->lang;
-                    (empty($tLang)) ? $tLang = $searchCfg->orderByLang : "";
-                    $resources[$id]->{$shortProperty}[$tLang] = $tripleVal;
-                }
-            } elseif ($triple->property === $totalCountProp) {
-                $totalCount = $triple->value;
-            }
-        }
-
-        $order = array_map(fn($x) => $x->resource->searchOrder[0]->value, $relations);
-        array_multisort($order, $relations);
-        return [$relations, $totalCount];
-    }
-
     function getChildren(int $resId, array $context, string $orderBy, string $orderByLang): array {
         $schema = $this->repoDb->getSchema();
         // add context required to resolve It should cover all of the next item and put collections first 
@@ -259,7 +177,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
 
         // search for acdh:hasNextItem 
         $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
-        $searchCfg->metadataMode = '999999_999999_0_0';
+        $searchCfg->metadataMode = '999999_999999_1_0';
         $searchCfg->metadataParentProperty = $schema->nextItem;
         $searchCfg->resourceProperties = array_keys($resContext);
         $searchCfg->relativesProperties = array_keys($context);
@@ -275,7 +193,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
             }
 
             $resources[$id] ??= (object) ['id' => $id];
-            if ($shortProperty === 'nextItem') { 
+            if ($triple->type === 'REL') {
                 $tid = (string) $triple->value;
                 $resources[$tid] ??= (object) ['id' => $tid];
                 $resources[$id]->{$shortProperty}[] = $resources[$tid];
@@ -285,6 +203,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
                 $resources[$id]->{$shortProperty}[$triple->lang] = $triple->value;
             }
         }
+        $resources = array_filter($resources, fn($x) => isset($x->nextItem));
         // if the resource has the acdh:hasNextItem, return children based on it 
         if (count($resources[(string) $resId]->nextItem ?? []) > 0) {
             $children = [];
@@ -300,9 +219,11 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         }
         // if the resource has no acdh:hasNextItem, fallback to acdh:isPartOf 
         unset($context[(string) $schema->nextItem]);
+        $context[(string) $schema->searchMatch] = 'match';
         $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
-        $searchCfg->metadataMode = '0_0_0_0';
+        $searchCfg->metadataMode = '0_0_1_0';
         $searchCfg->resourceProperties = array_keys($context);
+        $searchCfg->relativesProperties = [(string) $schema->label];
         $searchTerm = new \acdhOeaw\arche\lib\SearchTerm($schema->parent, $this->repoDb->getBaseUrl() . $resId, type: \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION);
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([$searchTerm], $searchCfg);
         $resources = [];
@@ -314,12 +235,17 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
                 continue;
             }
             $resources[$id] ??= (object) ['id' => $id];
-            if ($shortProperty === 'class') {
+            if ($triple->type === 'REL') {
+                $tid = (string) $triple->value;
+                $resources[$tid] ??= (object) ['id' => $tid];
+                $resources[$id]->{$shortProperty}[] = $resources[$tid];
+            } elseif ($shortProperty === 'class') {
                 $resources[$id]->class = $triple->value;
             } else {
                 $resources[$id]->{$shortProperty}[$triple->lang] = $triple->value;
             }
         }
+        $resources = array_filter($resources, fn($x) => isset($x->match));
         $sortFn = function ($a, $b) use ($orderByLang): int {
             if ($a->class !== $b->class) {
                 return $a->class <=> $b->class;
