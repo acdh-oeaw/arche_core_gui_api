@@ -137,5 +137,13 @@ arche_smart_autocomplete:
         str: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'      
-        
+
+arche_core_api_root_table:    
+    path: '/api/rootTable/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::rootTable'
+    requirements:
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'          
         

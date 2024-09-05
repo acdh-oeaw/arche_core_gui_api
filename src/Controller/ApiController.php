@@ -129,4 +129,9 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
+    
+    public function rootTable(string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\OntologyController();
+        return $controller->getRootTable($lang);
+    }
 }
