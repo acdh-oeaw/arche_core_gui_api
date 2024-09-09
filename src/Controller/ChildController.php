@@ -20,82 +20,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         parent::__construct();
         $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
     }
-
-    /**
-     * Child Datatable api - NOT IN USE NOW!
-     * @param string $id
-     * @param array $searchProps
-     * @param string $lang
-     * @return Response
-     */
-    /*
-    public function getChildData(string $id, array $searchProps, string $lang): Response {
-        $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
-
-        if (empty($id)) {
-            return new JsonResponse(array($this->t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
-        }
-
-        $result = [];
-        $schema = $this->repoDb->getSchema();
-        $property = (string) $schema->parent;
-
-        $resContext = [
-            (string) $schema->label => 'title',
-            (string) \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
-            (string) $schema->creationDate => 'avDate',
-            (string) $schema->id => 'identifier',
-            (string) $schema->accessRestriction => 'accessRestriction',
-            (string) $schema->binarySize => 'binarysize',
-            (string) $schema->fileName => 'filename',
-            (string) $schema->ingest->location => 'locationpath'
-        ];
-
-        $relContext = [
-            (string) $schema->label => 'title',
-        ];
-        $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
-        $searchCfg->offset = $searchProps['offset'];
-        $searchCfg->limit = $searchProps['limit'];
-        $orderby = "";
-        if ($searchProps['order'] === 'desc') {
-            $orderby = '^';
-        }
-        $searchCfg->orderBy = [$orderby . $schema->label];
-        $searchCfg->orderByLang = $lang;
-        $searchPhrase = '';
-        $t = microtime(true);
-
-        list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $searchCfg, $property, $searchPhrase);
-
-        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractChildView($result, ['id', 'title', 'class'], $totalCount, $this->repoDb->getBaseUrl(), $lang);
-
-        if (count((array) $result) == 0) {
-            return new Response(json_encode($this->t("There is no content")), 200, ['Content-Type' => 'application/json']);
-        }
-
-        $response = new Response();
-        $response->setContent(
-                json_encode(
-                        array(
-                            "aaData" => (array) $result,
-                            "iTotalRecords" => (string) $result[0]['sumcount'],
-                            "iTotalDisplayRecords" => (string) $result[0]['sumcount'],
-                            "draw" => intval($searchProps['draw']),
-                            "cols" => array_keys((array) $result[0]),
-                            "order" => 'asc',
-                            "orderby" => 1,
-                            "childTitle" => "title",
-                            "rootType" => "https://vocabs.acdh.oeaw.ac.at/schema#TopCollection"
-                        )
-                )
-        );
-        $response->headers->set('Content-Type', 'application/json');
-
-        return $response;
-    }
-*/
+    
     /**
      * Child tree view API
      * @param string $id
@@ -148,7 +73,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $result = $helper->extractChildTreeView((array) $result, $this->repoDb->getBaseUrl(), $lang);
        
         if (count((array) $result) == 0) {
-            return new Response(json_encode(t("There is no content")), 200, ['Content-Type' => 'application/json']);
+            return new Response(json_encode([]), 200, ['Content-Type' => 'application/json']);
         }
 
         $response = new Response();
