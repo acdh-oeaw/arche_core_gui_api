@@ -23,11 +23,22 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         ];
     }
 
+    /**
+     * Home page topcollections slider endpoint
+     * @param int $count
+     * @param string $lang
+     * @return JsonResponse
+     */
     public function topCollections(int $count, string $lang = "en"): JsonResponse {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getTopCollections($count, $lang);
     }
 
+    /**
+     * Top collections datatable view - not in use anymore?
+     * @param string $lang
+     * @return JsonResponse
+     */
     public function topCollectionsDT(string $lang = "en"): JsonResponse {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getTopCollectionsDT($this->setProps(), $lang);
@@ -44,16 +55,33 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getExpertData($id, $lang);
     }
 
+    /**
+     * Smartsearch MAP coordinates - not in use anymore?
+     * @param string $lang
+     * @return type
+     */
     public function searchCoordinates(string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getSearchCoordinates();
     }
 
+    /**
+     * Breadcrumb endpoint
+     * @param string $id
+     * @param string $lang
+     * @return type
+     */
     public function breadcrumbData(string $id, string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
         return $controller->getBreadcrumb($id, $lang);
     }
 
+    /**
+     * Resource versions data endpoint
+     * @param string $identifier
+     * @param string $lang
+     * @return type
+     */
     public function versionsList(string $identifier, string $lang = "en") {
         $controller = new \Drupal\arche_core_gui_api\Controller\VersionsController();
         return $controller->versionsList($identifier, $lang);
@@ -71,11 +99,23 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getChildData($identifier, $this->setProps(), $lang);
     }
 
+    /**
+     * Related resources and publications endpoint
+     * @param string $identifier
+     * @param string $lang
+     * @return type
+     */
     public function rprDT(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
         return $controller->getRprDT($identifier, $this->setProps(), $lang);
     }
 
+    /**
+     * Publications datatable endpoint
+     * @param string $identifier
+     * @param string $lang
+     * @return type
+     */
     public function publicationsDT(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
         return $controller->getPublicationsDT($identifier, $this->setProps(), $lang);
@@ -86,6 +126,10 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->search($_GET);
     }
     
+    /**
+     * CLARIN VCR
+     * @return Response
+     */
     public function vcr(): Response {
         $controller = new \Drupal\arche_core_gui_api\Controller\VCRController();
         return $controller->search($_GET);
@@ -130,8 +174,23 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $response;
     }
     
+    /**
+     * Root table api endpoint: /browser/api/rootTable/en
+     * @param string $lang
+     * @return type
+     */
     public function rootTable(string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\OntologyController();
         return $controller->getRootTable($lang);
+    }
+    
+    /**
+     * Create the Ontology html table for the CKEDITOR 
+     * @param string $lang
+     * @return type
+     */
+    public function ontologyJs(string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\OntologyController();
+        return $controller->getOntologyJs($lang);
     }
 }

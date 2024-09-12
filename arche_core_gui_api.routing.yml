@@ -145,5 +145,14 @@ arche_core_api_root_table:
     requirements:
         lang: '^[^\?]*$'
         _permission: 'access content'
-        _access: 'TRUE'          
+        _access: 'TRUE' 
+        
+arche_core_api_onotlogyjs_table:    
+    path: '/api/ontologyjs/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::ontologyJs'
+    requirements:
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'         
         
