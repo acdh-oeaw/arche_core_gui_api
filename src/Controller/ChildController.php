@@ -99,14 +99,15 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         ];
         $context[\zozlak\RdfConstants::RDF_TYPE] = 'class';
         $context[(string) $schema->nextItem] = 'nextItem';
-
-        // search for acdh:hasNextItem 
-        $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
-        $searchCfg->metadataMode = '999999_999999_1_0';
-        $searchCfg->metadataParentProperty = $schema->nextItem;
-        $searchCfg->resourceProperties = array_keys($resContext);
-        $searchCfg->relativesProperties = array_keys($context);
-        $searchTerm = new \acdhOeaw\arche\lib\SearchTerm($schema->id, $resId, type: \acdhOeaw\arche\lib\SearchTerm::TYPE_ID);
+        $context[(string) $schema->searchMatch]  = 'match';
+        $searchCfg = new SearchConfig();
+        $searchCfg->metadataMode = '0_0_1_0';
+        $searchCfg->resourceProperties = array_keys($context);
+        $searchCfg->relativesProperties = [
+            (string) $schema->label,
+            (string) $schema->nextItem,
+        ];
+        $searchTerm = new SearchTerm($schema->parent, $this->repoDb->getBaseUrl() . $resId, type: SearchTerm::TYPE_RELATION);
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([$searchTerm], $searchCfg);
         $resources = [];
         while ($triple = $pdoStmt->fetchObject()) {
@@ -128,56 +129,27 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
                 $resources[$id]->{$shortProperty}[$triple->lang] = $triple->value;
             }
         }
-        $resources = array_filter($resources, fn($x) => isset($x->nextItem));
-        // if the resource has the acdh:hasNextItem, return children based on it 
-        if (count($resources[(string) $resId]->nextItem ?? []) > 0) {
+        // if the resource has the acdh:hasNextItem, return children based on it
+        if (count($resources[(string)$resId]->nextItem ?? []) > 0) {
             $children = [];
             $queue = new \SplQueue();
-            array_map(fn($x) => $queue->push($x), $resources[(string) $resId]->nextItem);
+            array_map(fn($x) => isset($x->match) ? $queue->push($x) : null, $resources[(string)$resId]->nextItem);
             while (count($queue) > 0) {
                 $next = $queue->shift();
                 $children[] = $next;
-                array_map(fn($x) => $queue->push($x), $next->nextItem ?? []);
-                unset($next->nextItem); // optional, assures printing $children is safe 
+                array_map(fn($x) => isset($x->match) ? $queue->push($x) : null, $next->nextItem ?? []);
+                unset($next->nextItem); // optional, assures printing $children is safe
             }
-            return $children;
+        } else {
+            $children = array_filter($resources, fn($x) => isset($x->match));
+            $sortFn = function($a, $b) use ($orderByLang): int {
+                if ($a->class !== $b->class) {
+                    return $a->class <=> $b->class;
+                }
+                return ($a->title[$orderByLang] ?? $a->title[min(array_keys($a->title))]) <=> ($b->title[$orderByLang] ?? $b->title[min(array_keys($b->title))]) ;
+            };
+            usort($children, $sortFn);
         }
-        // if the resource has no acdh:hasNextItem, fallback to acdh:isPartOf 
-        unset($context[(string) $schema->nextItem]);
-        $context[(string) $schema->searchMatch] = 'match';
-        $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
-        $searchCfg->metadataMode = '0_0_1_0';
-        $searchCfg->resourceProperties = array_keys($context);
-        $searchCfg->relativesProperties = [(string) $schema->label];
-        $searchTerm = new \acdhOeaw\arche\lib\SearchTerm($schema->parent, $this->repoDb->getBaseUrl() . $resId, type: \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION);
-        $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([$searchTerm], $searchCfg);
-        $resources = [];
-        while ($triple = $pdoStmt->fetchObject()) {
-            $triple->value ??= '';
-            $id = (string) $triple->id;
-            $shortProperty = $context[$triple->property] ?? false;
-            if (!$shortProperty) {
-                continue;
-            }
-            $resources[$id] ??= (object) ['id' => $id];
-            if ($triple->type === 'REL') {
-                $tid = (string) $triple->value;
-                $resources[$tid] ??= (object) ['id' => $tid];
-                $resources[$id]->{$shortProperty}[] = $resources[$tid];
-            } elseif ($shortProperty === 'class') {
-                $resources[$id]->class = $triple->value;
-            } else {
-                $resources[$id]->{$shortProperty}[$triple->lang] = $triple->value;
-            }
-        }
-        $resources = array_filter($resources, fn($x) => isset($x->match));
-        $sortFn = function ($a, $b) use ($orderByLang): int {
-            if ($a->class !== $b->class) {
-                return $a->class <=> $b->class;
-            }
-            return ($a->title[$orderByLang] ?? $a->title[min(array_keys($a->title))]) <=> ($b->title[$orderByLang] ?? $b->title[min(array_keys($b->title))]);
-        };
-        usort($resources, $sortFn);
-        return $resources;
+        return $children;
     }
 }
