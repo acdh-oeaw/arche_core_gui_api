@@ -175,7 +175,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
             if ($a->class !== $b->class) {
                 return $a->class <=> $b->class;
             }
-            return ($a->title[$orderByLang] ?? reset($a->title)) <=> ($b->title[$orderByLang] ?? reset($b->title));
+            return ($a->title[$orderByLang] ?? $a->title[min(array_keys($a->title))]) <=> ($b->title[$orderByLang] ?? $b->title[min(array_keys($b->title))]);
         };
         usort($resources, $sortFn);
         return $resources;
