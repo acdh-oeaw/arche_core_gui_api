@@ -10,7 +10,7 @@ namespace Drupal\arche_core_gui_api\Helper;
 class ArcheBreadcrumbHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper {
 
     private $breadcrumbs = [];
-    
+
     /**
      * Generate the breadcrumb data
      * @param object $pdoStmt
@@ -27,6 +27,7 @@ class ArcheBreadcrumbHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreH
             if (!isset($context[$triple->property])) {
                 continue;
             }
+
             $property = $context[$triple->property];
             $this->resources[$id] ??= (object) ['id' => $id];
             if ($triple->type === 'REL') {
@@ -38,27 +39,37 @@ class ArcheBreadcrumbHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreH
             }
         }
 
-        $this->fetchBreadcrumbValues((array)[$this->resources[$resId]]);
-        
-        if(count($this->breadcrumbs) > 0) {
-            return array_reverse($this->breadcrumbs);
+        $this->fetchBreadcrumbValues((array) [$this->resources[$resId]]);
+
+        if (count($this->breadcrumbs) > 0) {
+            $this->breadcrumbs = array_reverse($this->breadcrumbs);
+            for ($i = 1; $i < count($this->breadcrumbs) - 1; $i++) {
+                $this->breadcrumbs[$i]['title'] = '...';
+            }
+            return $this->breadcrumbs;
         }
-        
         return [];
     }
 
     private function fetchBreadcrumbValues(array $data) {
         $item = [];
-        
         for ($i = 0; $i < count($data); $i++) {
-           
             $item['id'] = $data[$i]->id;
-            $item['title'] = $data[$i]->title[0]->value;
+            $title = $data[$i]->title[0]->value;
+            if(strlen($title) > 50) {
+                $truncated = substr($title, 0, 50);
+                $lastSpace = strrpos($truncated, ' ');
+                if ($lastSpace !== false) {
+                    $truncated = substr($truncated, 0, $lastSpace); // Cut up to the last full word
+                }
+                $title = $truncated.'...';
+            }
+            $item['title'] = $title;
+            $item['placeholder'] = $data[$i]->title[0]->value;
             $this->breadcrumbs[] = $item;
-            if(isset($data[$i]->parent)) {
-                 $this->fetchBreadcrumbValues((array)$data[$i]->parent);
+            if (isset($data[$i]->parent)) {
+                $this->fetchBreadcrumbValues((array) $data[$i]->parent);
             }
         }
-        
     }
 }
