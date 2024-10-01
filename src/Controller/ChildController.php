@@ -77,7 +77,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         }
 
         $response = new Response();
-        $response->setContent(json_encode((array) $result));
+        $response->setContent(json_encode((array) $result, \JSON_PARTIAL_OUTPUT_ON_ERROR, 1024));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
