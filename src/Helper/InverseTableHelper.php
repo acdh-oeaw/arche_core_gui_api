@@ -23,7 +23,7 @@ class InverseTableHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreHelp
         $arr = [];
         foreach ($result as $k => $v) {
             $item = [];
-           
+            
             if (isset($v->property)) {
                 $item['id'] = $v->resource->id;
                 $item['acdhid'] = $v->resource->id;
