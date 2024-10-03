@@ -152,4 +152,42 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         }
         return $children;
     }
+    
+    public function getNextPrevItem(string $rootId, string $resourceId, string $lang): Response {
+        $rootId = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $rootId));
+        $resourceId = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $resourceId));
+
+        if (empty($rootId) || empty($resourceId)) {
+            return new JsonResponse(array($this->t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
+        }
+
+        $result = [];
+        $schema = $this->repoDb->getSchema();
+        $property = [(string) $schema->parent, 'http://www.w3.org/2004/02/skos/core#prefLabel'];
+
+        $resContext = [
+            (string) $schema->label => 'title',
+            (string) $schema->id => 'identifier'
+        ];
+        
+        $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
+        $orderby = "asc";
+        $searchCfg->orderBy = [$schema->label];
+        $searchCfg->orderByLang = $lang;
+        $searchPhrase = '';
+        $result = $this->getChildren($rootId, $resContext, $orderby, $lang);
+        
+        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
+        $result = $helper->extractPrevNextItem((array) $result, $resourceId, $lang);
+       
+        if (count((array) $result) == 0) {
+            return new Response(json_encode([]), 200, ['Content-Type' => 'application/json']);
+        }
+
+        $response = new Response();
+        $response->setContent(json_encode((array) $result, \JSON_PARTIAL_OUTPUT_ON_ERROR, 1024));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
 }

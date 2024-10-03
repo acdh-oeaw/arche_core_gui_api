@@ -430,4 +430,30 @@ class ArcheCoreHelper {
             }
         }
     }
+    
+    /**
+     * Fetch the previous and next item from the child list
+     * @param array $result
+     * @param string $resourceId
+     * @param string $lang
+     * @return array
+     */
+    public function extractPrevNextItem(array $result, string $resourceId, string $lang): array {
+        $return = [];
+        foreach($result as $k => $v) {
+            if($v->id === $resourceId) {
+                if(isset($result[$k-1]->id)) {
+                    $return['previous']['id'] = $result[$k-1]->id;
+                    $return['previous']['title'] = $this->setTripleValueTitle($result[$k-1]->title, $lang);
+                }
+                if(isset($result[$k+1]->id)) {
+                    $return['next']['id'] = $result[$k+1]->id;
+                    $return['next']['title'] = $this->setTripleValueTitle($result[$k+1]->title, $lang);
+                }
+
+            }
+        }
+        
+        return $return;
+    }
 }

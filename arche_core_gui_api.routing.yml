@@ -155,4 +155,13 @@ arche_core_api_onotlogyjs_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'         
-        
+
+arche_core_api_next_prev_item:    
+    path: '/api/nextPrevItem/{rootId}/{resourceId}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::nextPrevItem'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'            

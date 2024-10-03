@@ -193,4 +193,11 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\OntologyController();
         return $controller->getOntologyJs($lang);
     }
+    
+    public function nextPrevItem(string $rootId, string $resourceId, string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\ChildController();
+        return $controller->getNextPrevItem($rootId, $resourceId, $lang);
+    }
+    
+    
 }
