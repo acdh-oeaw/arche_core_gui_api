@@ -185,7 +185,6 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         }
 
         $result = [];
-
         try {
             $res = new \acdhOeaw\arche\lib\RepoResourceDb($id, $this->repoDb);
         } catch (\Exception $ex) {

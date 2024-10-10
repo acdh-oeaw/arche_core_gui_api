@@ -120,6 +120,12 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
         return $controller->getPublicationsDT($identifier, $this->setProps(), $lang);
     }
+    
+    
+    public function spatialDT(string $identifier, string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
+        return $controller->getSpatialDT($identifier, $this->setProps(), $lang);
+    }
 
     public function smartSearch(): Response {
         $controller = new \Drupal\arche_core_gui_api\Controller\SmartSearchController();

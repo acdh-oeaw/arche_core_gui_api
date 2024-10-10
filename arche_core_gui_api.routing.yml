@@ -94,7 +94,17 @@ arche_core_api_publications_table:
         identifier: '^[^\?]*$'
         lang: '^[^\?]*$'
         _permission: 'access content'
-        _access: 'TRUE'            
+        _access: 'TRUE'  
+        
+arche_core_api_place_spatial_table:    
+    path: '/api/spatialDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::spatialDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'          
 
 arche_core_api_smart_search:    
     path: '/api/smartsearch'
