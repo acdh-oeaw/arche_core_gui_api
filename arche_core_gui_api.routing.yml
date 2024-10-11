@@ -104,7 +104,37 @@ arche_core_api_place_spatial_table:
         identifier: '^[^\?]*$'
         lang: '^[^\?]*$'
         _permission: 'access content'
-        _access: 'TRUE'          
+        _access: 'TRUE'       
+        
+arche_core_api_person_contributed_table:    
+    path: '/api/contributedDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::contributedDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'       
+
+arche_core_api_organisation_involved_table:    
+    path: '/api/involvedDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::involvedDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'       
+
+arche_core_api_publication_related_table:    
+    path: '/api/relatedDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::relatedDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE' 
 
 arche_core_api_smart_search:    
     path: '/api/smartsearch'

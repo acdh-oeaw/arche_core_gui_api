@@ -248,8 +248,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         return $response;
     }
     
-    
-    public function getSpatialDT(string $id, array $searchProps, string $lang): Response {
+    private function getGeneralInverseByProperty(string $id, array $searchProps, array $property, string $lang) {
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
         if (empty($id)) {
@@ -269,10 +268,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $scfg->orderBy = [$orderby . $schema->label];
         $scfg->orderByLang = $lang;
 
-        $property = [
-            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasSpatialCoverage',
-            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isSpatialCoverage'
-        ];
+        
 
         $resContext = [
             (string)$schema->label => 'title',
@@ -311,6 +307,71 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         );
         $response->headers->set('Content-Type', 'application/json');
         return $response;
+    }
+    
+    /**
+     * Place inverse table data
+     * @param string $id
+     * @param array $searchProps
+     * @param string $lang
+     * @return Response
+     */
+    public function getSpatialDT(string $id, array $searchProps, string $lang): Response {
+        $property = [
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasSpatialCoverage',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isSpatialCoverage'
+        ];
+        return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
+    }
+    
+    /**
+     * Persons contributed to data
+     * @param string $id
+     * @param array $searchProps
+     * @param string $lang
+     * @return Response
+     */
+    public function contributedDT(string $id, array $searchProps, string $lang): Response {
+        $property = [
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasContributor',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasCreator',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasAuthor',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasEditor',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasPrincipalInvestigator',
+        ];
+        return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
+    }
+    
+    /**
+     * Organisations involved in data
+     * @param string $id
+     * @param array $searchProps
+     * @param string $lang
+     * @return Response
+     */
+    public function involvedDT(string $id, array $searchProps, string $lang): Response {
+        $property = [
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasContributor',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasFunder',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasOwner',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLicensor',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasRightsHolder',
+        ];
+        return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
+    }
+    
+    public function relatedDT(string $id, array $searchProps, string $lang): Response {
+       
+        $property = [
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasDerivedPublication',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasSource',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#documents',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy'
+
+        ];
+        return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
     }
     
 }
