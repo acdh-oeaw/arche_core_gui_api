@@ -201,7 +201,18 @@ arche_core_api_next_prev_item:
     defaults:
         _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::nextPrevItem'
     requirements:
-        identifier: '^[^\?]*$'
+        rootId: '^[^\?]*$'
+        resourceId: '^[^\?]*$'
         lang: '^[^\?]*$'
         _permission: 'access content'
+        _access: 'TRUE'
+        
+arche_core_api_check_user:    
+    path: '/api/checkUser/{identifier}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::checkUserPersmission'
+    requirements:
+        identifier: '^[^\?]*$'
+        _permission: 'access content'
         _access: 'TRUE'            
+        

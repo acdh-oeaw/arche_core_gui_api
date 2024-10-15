@@ -11,7 +11,6 @@ use zozlak\RdfConstants as RC;
 
 class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseController {
 
-    private $apiHelper;
     private $prev = [];
     private $newer = [];
     private $versions = [];
@@ -21,7 +20,6 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
     public function __construct() {
         parent::__construct();
-        $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
         $this->helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
     }
 

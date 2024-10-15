@@ -22,7 +22,7 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
             'orderby' => $orderby, 'order' => $order
         ];
     }
-
+    
     /**
      * Home page topcollections slider endpoint
      * @param int $count
@@ -238,5 +238,9 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getNextPrevItem($rootId, $resourceId, $lang);
     }
     
+    public function checkUserPersmission(string $identifier) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\ArcheAuthenticationController();
+        return $controller->checkUserPermission($identifier, $_POST );
+    }
     
 }

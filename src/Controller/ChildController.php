@@ -14,11 +14,8 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
 
     use StringTranslationTrait;
 
-    private $apiHelper;
-
     public function __construct() {
         parent::__construct();
-        $this->apiHelper = new \Drupal\arche_core_gui_api\Helper\ApiHelper();
     }
     
     /**
