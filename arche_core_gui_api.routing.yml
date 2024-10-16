@@ -208,7 +208,7 @@ arche_core_api_next_prev_item:
         _access: 'TRUE'
         
 arche_core_api_check_user:    
-    path: '/api/checkUser/{identifier}'
+    path: '/api/checkUser/{identifier}/{aclRead}'
     defaults:
         _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::checkUserPersmission'
     requirements:

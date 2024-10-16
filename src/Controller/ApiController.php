@@ -238,9 +238,9 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getNextPrevItem($rootId, $resourceId, $lang);
     }
     
-    public function checkUserPersmission(string $identifier) {
+    public function checkUserPersmission(string $identifier, string $aclRead) {
         $controller = new \Drupal\arche_core_gui_api\Controller\ArcheAuthenticationController();
-        return $controller->checkUserPermission($identifier, $_POST );
+        return $controller->checkUserPermission($identifier, $aclRead );
     }
     
 }
