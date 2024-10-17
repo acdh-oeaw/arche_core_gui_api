@@ -46,7 +46,10 @@ class ArcheAuthenticationController extends \Drupal\arche_core_gui\Controller\Ar
                 if(array_intersect($aclRead, $this->roles)) {
                     $result['username'] = $username;
                     $result['access'] = "authorized";
-                } else {
+                } elseif(in_array('admin', $this->roles)) {
+                    $result['username'] = $username;
+                    $result['access'] = "authorized";
+                }else {
                     //the user doesnt have the right group to access the resource
                     $result['access'] = "not authorized";
                 }
