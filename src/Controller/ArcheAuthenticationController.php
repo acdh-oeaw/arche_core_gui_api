@@ -39,7 +39,7 @@ class ArcheAuthenticationController extends \Drupal\arche_core_gui\Controller\Ar
             $this->roles = $loginCookie;
             //we passed acl rights
             $result['username'] = $username;
-            $result['roles'] = implode(',',$this->roles);
+            $result['roles'] = implode(', ',$this->roles);
             if(!empty($aclRead)) {
                 $aclRead = explode(',', $aclRead);
                 //the user has the right aclread group
