@@ -242,21 +242,5 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         $controller = new \Drupal\arche_core_gui_api\Controller\ArcheAuthenticationController();
         return $controller->checkUserPermission($identifier, $aclRead );
     }
-    
-    /**
-     * Remove the archeLogin cookie, to logout the httpd user
-     * @return Response
-     */
-    public function logoutHttpd(): Response {
-        echo "<pre>";
-        var_dump($_COOKIE);
-        echo "</pre>";
-
-        die();
-        $_COOKIE['archeLogin'] = "";        
-        $response = new Response();
-        $response->setContent(json_encode("Logout done!"));
-        $response->headers->set('Content-Type', 'application/json');
-        return $response;
-    }
+   
 }

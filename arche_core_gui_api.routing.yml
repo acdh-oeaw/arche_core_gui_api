@@ -215,12 +215,3 @@ arche_core_api_check_user:
         _permission: 'access content'
         _access: 'TRUE'  
         
-arche_core_api_logout_user:    
-    path: '/api/logoutHttpd'
-    defaults:
-        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::logoutHttpd'
-    requirements:
-        identifier: '^[^\?]*$'
-        _permission: 'access content'
-        _access: 'TRUE'          
-        
