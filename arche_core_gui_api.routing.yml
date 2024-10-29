@@ -159,14 +159,13 @@ arche_core_api_search_date_facets:
     requirements:
         _permission: 'access content'
         _access: 'TRUE'              
-        
-        
+                
 arche_change_lng:    
     path: '/api/change_lng/{lng}'
     defaults:
         _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::archeChangeLanguage'
     requirements:
-        _access: 'TRUE'       
+        _access: 'TRUE'  
         
 arche_smart_autocomplete:
     path: '/api/smsearch/autocomplete/{str}'
@@ -214,5 +213,14 @@ arche_core_api_check_user:
     requirements:
         identifier: '^[^\?]*$'
         _permission: 'access content'
-        _access: 'TRUE'            
+        _access: 'TRUE'  
+        
+arche_core_api_logout_user:    
+    path: '/api/logoutHttpd'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::logoutHttpd'
+    requirements:
+        identifier: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'          
         

@@ -100,6 +100,11 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         //we are generating the hash for the DB request store process
         $this->requestHash = md5(print_r($postParams, true));
         $msg = [];
+        
+error_log("________ ______");
+            error_log(print_r($postParams, true));
+            error_log("::::::::::::::::");        
+        
         try {
             $this->setBasicPropertys($postParams);
             $useCache = !((bool) ($postParams['noCache'] ?? false));
@@ -243,6 +248,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             array_multisort($order, $resources);
 
             $facets = array_combine(array_map(fn($x) => $x->property ?? $x->type, $facets), $facets);
+            
+            error_log("_____HERE____");
             foreach ($resources as $i) {
                 $i->url = $this->baseUrl . $i->id;
                 $i->matchProperty ??= [];
@@ -366,6 +373,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $query->execute([$this->requestHash]);
             $result = $query->fetchColumn();
             if ($result !== false) {
+                error_log("CACHED:");
+                error_log(print_r($result, true));
                 return $result;
             }
         } catch (\Throwable $e) {
@@ -435,5 +444,10 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             }
         }
         return new Response(json_encode($response));
+    }
+    
+    
+    private function updateSearchHistoryCookie() {
+        
     }
 }
