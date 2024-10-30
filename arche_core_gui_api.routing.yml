@@ -125,7 +125,17 @@ arche_core_api_organisation_involved_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'       
-
+        
+arche_core_api_organisation_hasmembers_table:    
+    path: '/api/hasMembersDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::hasMembersDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'       
+        
 arche_core_api_publication_related_table:    
     path: '/api/relatedDT/{identifier}/{lang}'
     defaults:
