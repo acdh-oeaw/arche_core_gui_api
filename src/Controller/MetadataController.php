@@ -201,8 +201,8 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
                 array_keys($context)
         );
         $result = [];
-
-        $result = $this->helper->extractBreadcrumbView($pdoStmt, $id, $context, $lang);
+        $breadcrumbHelper = new \Drupal\arche_core_gui_api\Helper\ArcheBreadcrumbHelper();        
+        $result = $breadcrumbHelper->extractBreadcrumbView($pdoStmt, $id, $context, $lang);
 
         if (count((array) $result) == 0) {
             return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
