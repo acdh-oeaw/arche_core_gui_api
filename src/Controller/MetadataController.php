@@ -11,8 +11,11 @@ use zozlak\RdfConstants as RC;
 
 class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseController {
 
+    protected $helper;
+    
     public function __construct() {
         parent::__construct();
+        $this->helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
     }
 
     /**
@@ -46,8 +49,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $scfg->relativesProperties = [];
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(RC::RDF_TYPE, 'https://vocabs.acdh.oeaw.ac.at/schema#Place')], $scfg);
 
-        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractRootView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
+        $result = $this->helper->extractRootView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
         if (count((array) $result) == 0) {
             return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
         }
@@ -96,8 +98,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $scfg->relativesProperties = [];
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(RC::RDF_TYPE, $schema->classes->topCollection)], $scfg);
 
-        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractRootDTView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
+        $result = $this->helper->extractRootDTView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
 
         if (count((array) $result) == 0) {
             return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
@@ -159,8 +160,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $scfg->relativesProperties = [];
         $pdoStmt = $this->repoDb->getPdoStatementBySearchTerms([new \acdhOeaw\arche\lib\SearchTerm(RC::RDF_TYPE, $schema->classes->topCollection)], $scfg);
 
-        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractRootView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
+        $result = $this->helper->extractRootView($pdoStmt, $scfg->resourceProperties, $properties, $lang);
         if (count((array) $result) == 0) {
             return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
         }
@@ -202,8 +202,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         );
         $result = [];
 
-        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheBreadcrumbHelper();
-        $result = $helper->extractBreadcrumbView($pdoStmt, $id, $context, $lang);
+        $result = $this->helper->extractBreadcrumbView($pdoStmt, $id, $context, $lang);
 
         if (count((array) $result) == 0) {
             return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
@@ -257,9 +256,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
                 array_keys($contextRelatives)
         );
         $result = [];
-
-        $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
-        $result = $helper->extractExpertView($pdoStmt, $id, $contextRelatives, $lang);
+        $result = $this->helper->extractExpertView($pdoStmt, $id, $contextRelatives, $lang);
         
         if (count((array) $result) == 0) {
             return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
@@ -274,14 +271,17 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
      * @return JsonResponse
      */
     public function get3dUrl(string $identifier): JsonResponse {
-        $this->setTmpDir();
+        $tmpDir = \Drupal::service('file_system')->realpath(\Drupal::config('system.file')->get('default_scheme') . "://");
+       
         //download the file
         $identifier = $this->repoDb->getBaseUrl().$identifier;
         $obj = new \Drupal\arche_core_gui\Object\ThreeDObject();
-        $fileObj = $obj->downloadFile($identifier, $this->tmpDir);
+        $fileObj = $obj->downloadFile($identifier, $tmpDir);
         $fileUrl = ($fileObj['result']) ? $fileObj['result'] : "";
-        
-        return new JsonResponse(array("fileUrl" => $fileUrl), 200, ['Content-Type' => 'application/json']);
+        if(empty($fileUrl)) {
+            return new JsonResponse("No binary", 404, ['Content-Type' => 'application/json']);
+        }
+        return new JsonResponse($fileUrl, 200, ['Content-Type' => 'application/json']);
     }
 
 }
