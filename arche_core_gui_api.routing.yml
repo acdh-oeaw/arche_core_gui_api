@@ -95,6 +95,16 @@ arche_core_api_publications_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'  
+
+arche_core_api_collection_content_table:    
+    path: '/api/collectionContentDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::collectionContentDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'  
         
 arche_core_api_place_spatial_table:    
     path: '/api/spatialDT/{identifier}/{lang}'
@@ -224,4 +234,13 @@ arche_core_api_check_user:
         identifier: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'  
+        
+arche_core_api_3durl:    
+    path: '/api/get3DURL/{identifier}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::get3DURL'
+    requirements:
+        identifier: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'          
         

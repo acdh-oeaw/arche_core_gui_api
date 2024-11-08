@@ -267,5 +267,21 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
 
         return new JsonResponse(array("data" => $result), 200, ['Content-Type' => 'application/json']);
     }
+    
+    /**
+     * DOwnload the 3d Object file and return the url.
+     * @param string $identifier
+     * @return JsonResponse
+     */
+    public function get3dUrl(string $identifier): JsonResponse {
+        $this->setTmpDir();
+        //download the file
+        $identifier = $this->repoDb->getBaseUrl().$identifier;
+        $obj = new \Drupal\arche_core_gui\Object\ThreeDObject();
+        $fileObj = $obj->downloadFile($identifier, $this->tmpDir);
+        $fileUrl = ($fileObj['result']) ? $fileObj['result'] : "";
+        
+        return new JsonResponse(array("fileUrl" => $fileUrl), 200, ['Content-Type' => 'application/json']);
+    }
 
 }

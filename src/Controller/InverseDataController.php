@@ -241,6 +241,75 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
+    
+    
+    /**
+     * ContentScheme data DT
+     * @param string $id
+     * @param array $searchProps
+     * @param string $lang
+     * @return Response
+     */
+    public function getCollectionContentDT(string $id, array $searchProps, string $lang): Response {
+        $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
+
+        if (empty($id)) {
+            return new JsonResponse(array(t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
+        }
+
+        $result = [];
+        $scfg = new \acdhOeaw\arche\lib\SearchConfig();
+        $scfg->metadataMode = 'resource';
+        $scfg->offset = $searchProps['offset'];
+        $scfg->limit = $searchProps['limit'];
+        $orderby = "";
+        if ($searchProps['order'] === 'desc') {
+            $orderby = '^';
+        }
+        $scfg->orderBy = [$orderby . $this->schema->label];
+        $scfg->orderByLang = $lang;
+
+        $property = [
+            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#Concept'
+        ];
+
+        $resContext = [
+            (string) $this->schema->label => 'title',
+            (string) \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
+            (string) $this->schema->id => 'identifier'
+        ];
+
+        $relContext = [
+            (string) $this->schema->label => 'title',
+        ];
+
+        $searchPhrase = (isset($searchProps['search'])) ? $searchProps['search'] : "";
+
+        list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $scfg, $property, $searchPhrase);
+        $helper = new \Drupal\arche_core_gui_api\Helper\InverseTableHelper();
+        $result = $helper->extractinverseTableView($result, $lang);
+
+        if (count((array) $result) == 0) {
+            return new Response(json_encode(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
+        }
+
+        $response = new Response();
+        $response->setContent(
+                json_encode(
+                        array(
+                            "aaData" => (array) $result,
+                            "iTotalRecords" => (string) $totalCount,
+                            "iTotalDisplayRecords" => (string) $totalCount,
+                            "draw" => intval($searchProps['draw']),
+                            "cols" => array_keys((array) $result[0]),
+                            "order" => 'asc',
+                            "orderby" => 1
+                        )
+                )
+        );
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
 
     /**
      * Create the general inverse  property table data

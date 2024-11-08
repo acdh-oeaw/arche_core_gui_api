@@ -122,6 +122,17 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
     }
     
     /**
+     * ConceptScheme collection content datatable 
+     * @param string $identifier
+     * @param string $lang
+     * @return type
+     */
+    public function collectionContentDT(string $identifier, string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
+        return $controller->getCollectionContentDT($identifier, $this->setProps(), $lang);
+    }
+    
+    /**
      * Place spatial DT
      * @param string $identifier
      * @param string $lang
@@ -165,12 +176,21 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->hasMembersDT($identifier, $this->setProps(), $lang);
     }
     
+    /**
+     * Related resources data table
+     * @param string $identifier
+     * @param string $lang
+     * @return type
+     */
     public function relatedDT(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
         return $controller->relatedDT($identifier, $this->setProps(), $lang);
     }
     
-
+    /**
+     * The magic smart search function
+     * @return Response
+     */
     public function smartSearch(): Response {
         $controller = new \Drupal\arche_core_gui_api\Controller\SmartSearchController();
         return $controller->search($_GET);
@@ -244,14 +264,39 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getOntologyJs($lang);
     }
     
+    /**
+     * Get the next and previous child elements 
+     * @param string $rootId
+     * @param string $resourceId
+     * @param string $lang
+     * @return type
+     */
     public function nextPrevItem(string $rootId, string $resourceId, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\ChildController();
         return $controller->getNextPrevItem($rootId, $resourceId, $lang);
     }
     
+    /**
+     * Check the user permission of the actual resource
+     * @param string $identifier
+     * @param string $aclRead
+     * @return type
+     */
     public function checkUserPersmission(string $identifier, string $aclRead) {
         $controller = new \Drupal\arche_core_gui_api\Controller\ArcheAuthenticationController();
         return $controller->checkUserPermission($identifier, $aclRead );
     }
+    
+    /**
+     * Download and get the 3d object file url
+     * @param string $identifier
+     * @return type
+     */
+    public function get3DURL(string $identifier) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
+        return $controller->get3dUrl($identifier);
+    }
    
+    
+    
 }
