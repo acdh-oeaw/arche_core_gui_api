@@ -275,7 +275,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
        
         //download the file
         $identifier = $this->repoDb->getBaseUrl().$identifier;
-        $identifier = 'https://arche-curation.acdh-dev.oeaw.ac.at/api/3110280';
+        //$identifier = 'https://arche-curation.acdh-dev.oeaw.ac.at/api/3110280';
         $obj = new \Drupal\arche_core_gui\Object\ThreeDObject();
         $fileObj = $obj->downloadFile($identifier, $tmpDir);
         $fileUrl = ($fileObj['result']) ? $fileObj['result'] : "";
