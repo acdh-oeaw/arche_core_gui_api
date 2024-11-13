@@ -127,9 +127,9 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
      * @param string $lang
      * @return type
      */
-    public function collectionContentDT(string $identifier, string $lang) {
+    public function collectionConceptDT(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
-        return $controller->getCollectionContentDT($identifier, $this->setProps(), $lang);
+        return $controller->getCollectionConceptDT($identifier, $this->setProps(), $lang);
     }
     
     /**
@@ -185,6 +185,11 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
     public function relatedDT(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
         return $controller->relatedDT($identifier, $this->setProps(), $lang);
+    }
+    
+    public function isPartOfDT(string $identifier, string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
+        return $controller->isPartOfDT($identifier, $this->setProps(), $lang);
     }
     
     /**

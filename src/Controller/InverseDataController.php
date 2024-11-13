@@ -250,7 +250,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      * @param string $lang
      * @return Response
      */
-    public function getCollectionContentDT(string $id, array $searchProps, string $lang): Response {
+    public function getCollectionConceptDT(string $id, array $searchProps, string $lang): Response {
         $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
 
         if (empty($id)) {
@@ -270,7 +270,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $scfg->orderByLang = $lang;
 
         $property = [
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#Concept'
+            (string) 'http://www.w3.org/2004/02/skos/core#topConceptOf'
         ];
 
         $resContext = [
@@ -498,6 +498,25 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasSource'
+        ];
+        $columns = [1 => (string) $this->schema->label, 3 => (string) \zozlak\RdfConstants::RDF_TYPE];
+        $orderKey = $searchProps['orderby'];
+        if (array_key_exists($searchProps['orderby'], $columns)) {
+            $searchProps['orderby'] = $columns[$searchProps['orderby']];
+            $searchProps['orderbyColumn'] = $orderKey;
+        } else {
+            $searchProps['orderby'] = (string) \zozlak\RdfConstants::RDF_TYPE;
+            $searchProps['orderbyColumn'] = 1;
+        }
+
+        return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
+    }
+    
+    
+    public function isPartOfDT(string $id, array $searchProps, string $lang): Response {
+
+        $property = [
+            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isPartOf'
         ];
         $columns = [1 => (string) $this->schema->label, 3 => (string) \zozlak\RdfConstants::RDF_TYPE];
         $orderKey = $searchProps['orderby'];

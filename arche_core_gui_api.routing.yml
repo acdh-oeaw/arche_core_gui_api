@@ -96,10 +96,10 @@ arche_core_api_publications_table:
         _permission: 'access content'
         _access: 'TRUE'  
 
-arche_core_api_collection_content_table:    
-    path: '/api/collectionContentDT/{identifier}/{lang}'
+arche_core_api_collection_concept_table:    
+    path: '/api/collectionConceptDT/{identifier}/{lang}'
     defaults:
-        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::collectionContentDT'
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::collectionConceptDT'
     requirements:
         identifier: '^[^\?]*$'
         lang: '^[^\?]*$'
@@ -124,7 +124,17 @@ arche_core_api_person_contributed_table:
         identifier: '^[^\?]*$'
         lang: '^[^\?]*$'
         _permission: 'access content'
-        _access: 'TRUE'       
+        _access: 'TRUE' 
+        
+arche_core_api_is_part_of_table:    
+    path: '/api/isPartOfDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::isPartOfDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'         
 
 arche_core_api_organisation_involved_table:    
     path: '/api/involvedDT/{identifier}/{lang}'
