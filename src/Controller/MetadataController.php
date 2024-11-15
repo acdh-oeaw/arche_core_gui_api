@@ -257,7 +257,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         );
         $result = [];
         $result = $this->helper->extractExpertView($pdoStmt, $id, $contextRelatives, $lang);
-        
+      
         if (count((array) $result) == 0) {
             return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
         }

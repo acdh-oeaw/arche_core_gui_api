@@ -343,7 +343,10 @@ class ArcheCoreHelper {
 
         $this->changePropertyToShortcut((string) $resId);
         $this->setDefaultTitle($lang, $resId);
-
+        if($resId === 67346) {
+            unset($this->resources[(string) $resId]->{'acdh:isPartOf'});
+        }
+        
         return $this->resources[(string) $resId];
     }
 
