@@ -284,9 +284,17 @@ class ArcheCoreHelper {
 
             $id = (string) $triple->id;
             $this->resources[$id] ??= (object) ['id' => (int) $id];
+            
 
+            
             if ($triple->id !== $resId && isset($contextRelatives[$triple->property])) {
+               
+                
+                
                 $property = $contextRelatives[$triple->property];
+                
+
+                
                 $relvalues = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
 
                 if ($property === 'title') {
@@ -307,6 +315,9 @@ class ArcheCoreHelper {
                 if ($property === 'class') {
                     $this->resources[$id]->property[$lang] = $relvalues->value;
                 }
+                if ($property === 'identifiers') {
+                    $this->resources[$id]->{'identifiers'}[] = $triple->value;
+                }
 
                 $this->resources[$id]->type = "REL";
                 $this->resources[$id]->repoid = $id;
@@ -319,6 +330,7 @@ class ArcheCoreHelper {
                     $this->resources[$tid] ??= (object) ['id' => (int) $tid];
                     $this->resources[$id]->$property[$tid][$lang] = (object) $this->resources[$tid];
                 } elseif ($triple->type === 'ID') {
+                   
                     $this->resources[$id]->$property[$id][$lang][] = (object) $triple;
                 } elseif ($triple->type === 'http://www.w3.org/2001/XMLSchema#anyURI') {
                     $this->resources[$id]->$property[$id][$lang][] = (object) $triple;

@@ -241,12 +241,14 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasCurator' => 'curator',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLicense' => 'license',
             (string)'https://vocabs.acdh.oeaw.ac.at/schema#binarySize' => 'binarySize',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasIdentifier' => 'identifiers',
             (string)\zozlak\RdfConstants::RDF_TYPE => 'class',
         ];
         $contextRelatives = [
             (string)$schema->label => 'title',
             (string)\zozlak\RdfConstants::RDF_TYPE => 'class',
             (string)$schema->parent => 'parent',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasIdentifier' => 'identifiers',
         ];
 
         $pdoStmt = $res->getMetadataStatement(
@@ -257,7 +259,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         );
         $result = [];
         $result = $this->helper->extractExpertView($pdoStmt, $id, $contextRelatives, $lang);
-      
+       
         if (count((array) $result) == 0) {
             return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
         }
