@@ -86,10 +86,9 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
      * @param array $context
      * @param string $orderBy
      * @param string $orderByLang
-     * @param bool $displayTree
      * @return array
      */
-    function getChildren(int $resId, array $context, string $orderBy, string $orderByLang, bool $displayTree = true): array {
+    function getChildren(int $resId, array $context, string $orderBy, string $orderByLang): array {
         $schema = $this->repoDb->getSchema();
         // add context required to resolve It should cover all of the next item and put collections first 
         $resContext = [
@@ -127,9 +126,8 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
                 $resources[$id]->{$shortProperty}[$triple->lang] = $triple->value;
             }
         }
-        
         // if the resource has the acdh:hasNextItem, return children based on it
-        if(!$displayTree && count($resources[(string)$resId]->nextItem ?? []) > 0) {
+        if (count($resources[(string)$resId]->nextItem ?? []) > 0) {
             $children = [];
             $queue = new \SplQueue();
             array_map(fn($x) => isset($x->match) ? $queue->push($x) : null, $resources[(string)$resId]->nextItem);
@@ -174,7 +172,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         $searchCfg->orderBy = [$schema->label];
         $searchCfg->orderByLang = $lang;
         $searchPhrase = '';
-        $result = $this->getChildren($rootId, $resContext, $orderby, $lang, false);
+        $result = $this->getChildren($rootId, $resContext, $orderby, $lang);
         
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
         $result = $helper->extractPrevNextItem((array) $result, $resourceId, $lang);
