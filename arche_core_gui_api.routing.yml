@@ -106,6 +106,17 @@ arche_core_api_collection_concept_table:
         _permission: 'access content'
         _access: 'TRUE'  
         
+        
+arche_core_api_project_associated_table:    
+    path: '/api/projectAssociatedDT/{identifier}/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::associatedProjectsDT'
+    requirements:
+        identifier: '^[^\?]*$'
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'              
+        
 arche_core_api_place_spatial_table:    
     path: '/api/spatialDT/{identifier}/{lang}'
     defaults:

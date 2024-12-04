@@ -143,6 +143,11 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getSpatialDT($identifier, $this->setProps(), $lang);
     }
     
+    public function associatedProjectsDT(string $identifier, string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
+        return $controller->getAssociatedProjectsDT($identifier, $this->setProps(), $lang);
+    }
+    
     /**
      * Person contributed DT
      * @param string $identifier

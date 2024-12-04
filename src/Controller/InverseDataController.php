@@ -404,6 +404,25 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
         return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
     }
+    
+    
+    public function getAssociatedProjectsDT(string $id, array $searchProps, string $lang): Response {
+        $property = [
+            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasRelatedProject'
+        ];
+
+        $columns = [3 => (string) $this->schema->label, 4 => (string) \zozlak\RdfConstants::RDF_TYPE];
+        $orderKey = $searchProps['orderby'];
+        if (array_key_exists($searchProps['orderby'], $columns)) {
+            $searchProps['orderby'] = $columns[$searchProps['orderby']];
+            $searchProps['orderbyColumn'] = $orderKey;
+        } else {
+            $searchProps['orderby'] = (string) \zozlak\RdfConstants::RDF_TYPE;
+            $searchProps['orderbyColumn'] = 1;
+        }
+
+        return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
+    }
 
     /**
      * Persons contributed to data
