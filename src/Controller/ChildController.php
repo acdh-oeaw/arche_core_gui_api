@@ -17,7 +17,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
     public function __construct() {
         parent::__construct();
     }
-    
+
     /**
      * Child tree view API
      * @param string $id
@@ -38,7 +38,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
 
         $resContext = [
             (string) $schema->label => 'title',
-         //   (string) \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
+            //   (string) \zozlak\RdfConstants::RDF_TYPE => 'rdftype',
             //(string) $schema->creationDate => 'avDate',
             (string) $schema->id => 'identifier',
             (string) $schema->accessRestriction => 'accessRestriction',
@@ -46,12 +46,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
             (string) $schema->fileName => 'filename',
             (string) $schema->ingest->location => 'locationpath'
         ];
-        /*
-        $relContext = [
-            (string) $schema->label => 'title',
-            \zozlak\RdfConstants::RDF_TYPE => 'rdftype'
-        ];
-*/
+        
         $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
         //$searchCfg->offset = $searchProps['offset'];
         //$searchCfg->limit = $searchProps['limit'];
@@ -65,10 +60,32 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         //$searchPhrase = '170308';
         $searchPhrase = '';
         $result = $this->getChildren($id, $resContext, $orderby, $lang);
-        
+
+        //if we have metadata error #23804 , we have to prevent jstree destroy
+        if(isset($result['error'])) {
+            $result = [];
+            $result['id'] = 0;
+            $result['filename'][] = "incosistent metadata!";
+            $result['identifier'][] = "none";
+            $result['title'] = "incosistent metadata!";
+            $result['text'] = "<span style='color: red;'>incosistent metadata!</span>";
+            $result['uri'] = "none";
+            $result['uri_dl'] = "none";
+            $result['children'] = false;
+            $result['accessRestriction'] = 'public';
+            $result['userAllowedToDL'] = false;
+            $result['rdftype'] = "";
+            $result['a_attr']['href'] = "none";
+            $result['dir'] = false;
+            $response = new Response();
+            $response->setContent(json_encode((array) $result, \JSON_PARTIAL_OUTPUT_ON_ERROR, 1024));
+            $response->headers->set('Content-Type', 'application/json');
+            return $response;
+        }
+
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
         $result = $helper->extractChildTreeView((array) $result, $this->repoDb->getBaseUrl(), $lang);
-       
+
         if (count((array) $result) == 0) {
             return new Response(json_encode([]), 200, ['Content-Type' => 'application/json']);
         }
@@ -96,7 +113,7 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
         ];
         $context[\zozlak\RdfConstants::RDF_TYPE] = 'class';
         $context[(string) $schema->nextItem] = 'nextItem';
-        $context[(string) $schema->searchMatch]  = 'match';
+        $context[(string) $schema->searchMatch] = 'match';
         $searchCfg = new SearchConfig();
         $searchCfg->metadataMode = '0_0_1_0';
         $searchCfg->resourceProperties = array_keys($context);
@@ -127,29 +144,40 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
             }
         }
         // if the resource has the acdh:hasNextItem, return children based on it
-        if (count($resources[(string)$resId]->nextItem ?? []) > 0) {
+        if (count($resources[(string) $resId]->nextItem ?? []) > 0) {
             $children = [];
             $queue = new \SplQueue();
-            array_map(fn($x) => isset($x->match) ? $queue->push($x) : null, $resources[(string)$resId]->nextItem);
+            array_map(fn($x) => isset($x->match) ? $queue->push($x) : null, $resources[(string) $resId]->nextItem);
             while (count($queue) > 0) {
                 $next = $queue->shift();
                 $children[] = $next;
                 array_map(fn($x) => isset($x->match) ? $queue->push($x) : null, $next->nextItem ?? []);
                 unset($next->nextItem); // optional, assures printing $children is safe
             }
+            //if we have incostistent metadata, then we have to return an error
+            if (count($children) === 0) {
+                return ['error' => 'incostintent metadata'];
+            }
         } else {
             $children = array_filter($resources, fn($x) => isset($x->match));
-            $sortFn = function($a, $b) use ($orderByLang): int {
+            $sortFn = function ($a, $b) use ($orderByLang): int {
                 if ($a->class !== $b->class) {
                     return $a->class <=> $b->class;
                 }
-                return ($a->title[$orderByLang] ?? $a->title[min(array_keys($a->title))]) <=> ($b->title[$orderByLang] ?? $b->title[min(array_keys($b->title))]) ;
+                return ($a->title[$orderByLang] ?? $a->title[min(array_keys($a->title))]) <=> ($b->title[$orderByLang] ?? $b->title[min(array_keys($b->title))]);
             };
             usort($children, $sortFn);
         }
         return $children;
     }
-    
+
+    /**
+     * Create previos/next item
+     * @param string $rootId
+     * @param string $resourceId
+     * @param string $lang
+     * @return Response
+     */
     public function getNextPrevItem(string $rootId, string $resourceId, string $lang): Response {
         $rootId = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $rootId));
         $resourceId = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $resourceId));
@@ -166,17 +194,17 @@ class ChildController extends \Drupal\arche_core_gui\Controller\ArcheBaseControl
             (string) $schema->label => 'title',
             (string) $schema->id => 'identifier'
         ];
-        
+
         $searchCfg = new \acdhOeaw\arche\lib\SearchConfig();
         $orderby = "asc";
         $searchCfg->orderBy = [$schema->label];
         $searchCfg->orderByLang = $lang;
         $searchPhrase = '';
         $result = $this->getChildren($rootId, $resContext, $orderby, $lang);
-        
+
         $helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
         $result = $helper->extractPrevNextItem((array) $result, $resourceId, $lang);
-       
+
         if (count((array) $result) == 0) {
             return new Response(json_encode([]), 200, ['Content-Type' => 'application/json']);
         }
