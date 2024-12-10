@@ -100,11 +100,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         //we are generating the hash for the DB request store process
         $this->requestHash = md5(print_r($postParams, true));
         $msg = [];
-        
-error_log("________ ______");
-            error_log(print_r($postParams, true));
-            error_log("::::::::::::::::");        
-        
+
         try {
             $this->setBasicPropertys($postParams);
             $useCache = !((bool) ($postParams['noCache'] ?? false));
@@ -113,7 +109,7 @@ error_log("________ ______");
             if ($useCache) {
                 $cached = $this->getCachedData();
                 //if we have already stored cache
-                if ($cached !== "") {                  
+                if ($cached !== "") {
                     return new Response($cached);
                 }
             }
@@ -125,10 +121,10 @@ error_log("________ ______");
                 (string) $this->schema->label => 'title',
                 (string) $this->schema->parent => 'parent',
             ];
-            
+
             // SEARCH CONFIG
             $facets = $this->sConfig->facets;
-            
+
             if (!$postParams['linkNamedEntities'] ?? true) {
                 $facets = array_filter($facets, fn($x) => $x->type !== 'linkProperty');
             }
@@ -139,11 +135,11 @@ error_log("________ ______");
             $spatialSearchTerm = null;
             $allowedProperties = [];
             $facetsInUse = [];
-            
+
             foreach ($facets as $facet) {
                 $fid = in_array($facet->type, $specialFacets) ? $facet->type : $facet->property;
                 if (is_array($this->reqFacets[$fid] ?? null) || isset($this->reqFacets[$fid]) && $fid === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
-                
+
                     $facetsInUse[] = $fid;
                     $reqFacet = $this->reqFacets[$fid];
                     if ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_LINK) {
@@ -176,8 +172,7 @@ error_log("________ ______");
                         }
                         $facet->distribution = (bool) ($this->reqFacets[$fid]['distribution'] ?? false);
                     } elseif ($facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP) {
-                         $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacet, operator: '&&');
-                       
+                        $spatialSearchTerm = new \acdhOeaw\arche\lib\SearchTerm(value: $reqFacet, operator: '&&');
                     } elseif (count($reqFacet) > 0) {
                         $type = $facet->type === \acdhOeaw\arche\lib\SmartSearch::FACET_OBJECT ? \acdhOeaw\arche\lib\SearchTerm::TYPE_RELATION : null;
                         $searchTerms[] = new \acdhOeaw\arche\lib\SearchTerm($fid, array_values($reqFacet), type: $type);
@@ -202,7 +197,7 @@ error_log("________ ______");
             // display distribution of defined facets
             $facetsLang = !empty($postParams['labelsLang']) ? $postParams['labelsLang'] : (!empty($postParams['preferredLang']) ? $postParams['preferredLang'] : ($this->sConfig->prefLang ?? 'en'));
             $emptySearch = empty($this->searchPhrase) && count($searchTerms) === 0 && $spatialSearchTerm === null && count($searchIn) === 0;
-            
+
             if ($emptySearch) {
                 $facetStats = $search->getInitialFacets($facetsLang, $this->sConfig->facetsCache);
             } else {
@@ -218,6 +213,18 @@ error_log("________ ______");
             $cfg->resourceProperties = array_keys($this->context);
             $cfg->relativesProperties = array_keys($relContext);
             $cfg->orderBy = [$this->sConfig->fallbackOrderBy];
+
+            /**
+             * #23810 - only topcollection search order by is availabledate
+             */
+            if (isset($postParams['facets']) && count($postParams['facets']) === 1) {
+                $rdf = $this->config->schema->namespaces->rdfs . 'type';
+                if (key_exists($rdf, $postParams['facets']) &&
+                        $postParams['facets'][$rdf][0] === $this->config->schema->classes->topCollection) {
+                    $cfg->orderBy = ['^' . $this->config->schema->creationDate];
+                }
+            }
+
             $triplesIterator = $search->getSearchPage($page, $resourcesPerPage, $cfg, $this->sConfig->prefLang ?? 'en');
             // parse triples into objects as ordinary
             $resources = [];
@@ -248,8 +255,7 @@ error_log("________ ______");
             array_multisort($order, $resources);
 
             $facets = array_combine(array_map(fn($x) => $x->property ?? $x->type, $facets), $facets);
-            
-            error_log("_____HERE____");
+
             foreach ($resources as $i) {
                 $i->url = $this->baseUrl . $i->id;
                 $i->matchProperty ??= [];
@@ -319,7 +325,7 @@ error_log("________ ______");
             if (!$msg) {
                 $msg['en'] = "";
             }
-            
+
             $fullresponse = json_encode([
                 'facets' => $facetStats,
                 'results' => $resources,
@@ -445,8 +451,7 @@ error_log("________ ______");
         }
         return new Response(json_encode($response));
     }
-    
-    
+
     private function updateSearchHistoryCookie() {
         
     }
