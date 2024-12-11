@@ -81,12 +81,13 @@ class RootTableHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper 
      */
     private function createRootTableHtml(): string {
         $html = '';
-       
+
         if (count($this->data) > 0) {
             // Open the table
             $html .= $this->createRootTableHeader();
             // Cycle through the array
             foreach ($this->data as $val) {
+               
                 $html .= '<tr>';
                 $html .= '<td class="sticky"><b>' . str_replace("https://vocabs.acdh.oeaw.ac.at/schema#", "", $val['property']) . '</b></td>';
                 $html .= '<td>' . $val['Project'] . '</td>';
@@ -99,13 +100,13 @@ class RootTableHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper 
                 $html .= '<td>' . $val['Organisation'] . '</td>';
                 $html .= '<td>' . $val['Person'] . '</td>';
                 $html .= '<td>' . $val['order'] . '</td>';
-                $html .= '<td>' . $val['range'] . '</td>';
+                $html .= '<td>' . $this->formatRange($val["range"]) . '</td>';
                 $html .= '<td>' . $val['vocabulary'] . '</td>';
                 $html .= '<td>' . $val['automatedFill'] . '</td>';
                 $html .= '<td>' . $val['defaultValue'] . '</td>';
                 $html .= '<td>' . $val['langTag'] . '</td>';
                 $comment = $val['comment'][$this->lang] ? $val['comment'][$this->lang] : reset($val['comment']);
-                $html .= '<td>' . $comment . '</td>';                
+                $html .= '<td>' . $comment . '</td>';
                 $html .= '</tr>';
             }
             $html .= "</table>";
@@ -113,4 +114,33 @@ class RootTableHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper 
         return $html;
     }
 
+    /**
+     * Format the range values for the better readability
+     * @param array $range
+     * @return string
+     */
+    private function formatRange(array $range): string {
+        $props = ['http://www.w3.org/1999/02/22-rdf-syntax-ns#' => 'rdf',
+            'http://www.w3.org/2001/XMLSchema#' => 'xsd',
+            'http://www.w3.org/2002/07/owl#' => 'owl',
+            'http://www.w3.org/2004/02/skos/core#' => 'skosCore'];
+        $string = "";
+      
+        $filteredUrls = array_filter($range, function ($url) {
+            return strpos($url, 'arche') === false;
+        });
+       
+        $updatedUrls = array_map(function ($url) use ($props) {
+            foreach ($props as $key => $value) {
+                if (strpos($url, $key) !== false) {
+                    $url = str_replace($key, $value.':', $url);
+                }
+            }
+            return $url;
+        }, $filteredUrls);
+
+        $string = implode(',<br> ', $updatedUrls);
+        
+        return $string;
+    }
 }
