@@ -135,7 +135,7 @@ class OntologyController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
                 $row[$class] = $pc['min'] === $pc['max'] ? $pc['min'] : $pc['min'] . '-' . $pc['max'];
             }
             $row['order'] = $p->ordering;
-            $row['range'] = reset($p->range);
+            $row['range'] = $p->range;
             $row['vocabulary'] = $p->vocabs;
             $row['automatedFill'] = $p->automatedFill;
             $row['defaultValue'] = $p->defaultValue;

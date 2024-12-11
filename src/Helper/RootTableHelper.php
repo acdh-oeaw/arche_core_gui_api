@@ -87,7 +87,7 @@ class RootTableHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper 
             $html .= $this->createRootTableHeader();
             // Cycle through the array
             foreach ($this->data as $val) {
-               
+                
                 $html .= '<tr>';
                 $html .= '<td class="sticky"><b>' . str_replace("https://vocabs.acdh.oeaw.ac.at/schema#", "", $val['property']) . '</b></td>';
                 $html .= '<td>' . $val['Project'] . '</td>';
