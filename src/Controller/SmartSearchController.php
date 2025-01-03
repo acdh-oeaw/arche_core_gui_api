@@ -67,14 +67,15 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $search->setFacets((array) $this->sConfig->facets);
             $useCache = ((bool) ($postParams['noCache'] ?? false));
 
-            return new Response(json_encode([
-                        'facets' => $search->getInitialFacets($this->preferredLang, $this->sConfig->facetsCache, $useCache),
-                        'results' => [],
-                        'totalCount' => -1,
-                        'page' => 0,
-                        'pageSize' => 0,
-                        'maxCount' => -1
-                            ], \JSON_UNESCAPED_SLASHES));
+            $response = [
+                'facets' => $search->getInitialFacets($this->preferredLang, $this->sConfig->facetsCache, $useCache),
+                'results' => [],
+                'totalCount' => -1,
+                'page' => 0,
+                'pageSize' => 0,
+                'maxCount' => -1
+            ];
+            return new Response(json_encode($response, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE), Response::HTTP_OK, ['Content-Type' => 'application/json']);
         } catch (\Throwable $e) {
             return new Response(t("Error in search!") . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
         }
@@ -109,8 +110,8 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             if ($useCache) {
                 $cached = $this->getCachedData();
                 //if we have already stored cache
-                if ($cached !== "") {
-                    return new Response($cached);
+                if ($cached !== null) {
+                    return new Response($cached->response, Response::HTTP_OK, ['x-smartsearch-cache' => $cached->created, 'Content-Type' => 'application/json']);
                 }
             }
 
@@ -227,40 +228,18 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
             $triplesIterator = $search->getSearchPage($page, $resourcesPerPage, $cfg, $this->sConfig->prefLang ?? 'en');
             // parse triples into objects as ordinary
-            $resources = [];
             $totalCount = 0;
 
-            foreach ($triplesIterator as $triple) {
-                if ($triple->property === (string) $this->schema->searchCount) {
-                    $totalCount = (int) $triple->value;
-                    continue;
-                }
-                $property = $this->context[$triple->property] ?? false;
-                if ($property) {
-                    $id = (string) $triple->id;
-                    $resources[$id] ??= (object) ['id' => $triple->id];
-                    if ($triple->type === 'REL') {
-                        $tid = (string) $triple->value;
-                        $resources[$tid] ??= (object) ['id' => (int) $tid];
-                        $resources[$id]->{$property}[] = $resources[$tid];
-                    } elseif (!empty($triple->lang)) {
-                        $resources[$id]->{$property}[$triple->lang] = $triple->value;
-                    } else {
-                        $resources[$id]->{$property}[] = $triple->value;
-                    }
-                }
-            }
+            $resources = $this->triples2resourceObjects($triplesIterator, $totalCount);
+
             $resources = array_filter($resources, fn($x) => isset($x->matchOrder));
             $order = array_map(fn($x) => (int) $x->matchOrder[0], $resources);
             array_multisort($order, $resources);
 
             $facets = array_combine(array_map(fn($x) => $x->property ?? $x->type, $facets), $facets);
 
+            $this->postprocessResources($resources);
             foreach ($resources as $i) {
-                $i->url = $this->baseUrl . $i->id;
-                $i->matchProperty ??= [];
-                $i->matchHiglight ??= array_fill(0, count($i->matchProperty), '');
-
                 // turn continuous properties context into matchProperty values
                 foreach (get_object_vars($i) as $p => $v) {
                     if (!str_starts_with($p, '|')) {
@@ -283,6 +262,23 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             // put facets used for search first
             // uasort is stable in PHP >=8.0
             uasort($facetStats, fn($a, $b) => in_array($b->property, $facetsInUse) <=> in_array($a->property, $facetsInUse));
+
+            // fetch data on $searchIn resources
+            if (count($searchIn) > 0) {
+                $searchInQuery = "SELECT * FROM (VALUES " . substr(str_repeat(', (?::bigint)', count($searchIn)), 2) . ") t (id)";
+                $searchInQuery = $this->repoDb->getPdoStatementBySqlQuery($searchInQuery, $searchIn, $cfg);
+                $searchInRes   = $this->triples2resourceObjects($searchInQuery->fetchAll(\PDO::FETCH_OBJ));
+                $searchInRes   = array_values(array_filter($searchInRes, fn($x) => in_array($x, $searchIn), ARRAY_FILTER_USE_KEY));
+                $this->postprocessResources($searchInRes);
+            }
+
+            // if map filter is used, include also location of all places in the spatial index
+            $allPins = null;
+            if ($spatialSearchTerm !== null) {
+                $allPins = $search->getInitialFacets($this->preferredLang, $this->sConfig->facetsCache);
+                $allPins = array_filter($allPins, fn($x) => $x->type === \acdhOeaw\arche\lib\SmartSearch::FACET_MAP);
+                $allPins = (reset($allPins) ?: null)?->values;
+            }
 
             // check for corner cases user should be warned about
             $messages = [];
@@ -326,7 +322,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 $msg['en'] = "";
             }
 
-            $fullresponse = json_encode([
+            $fullresponse = [
                 'facets' => $facetStats,
                 'results' => $resources,
                 'totalCount' => $emptySearch ? -1 : $totalCount,
@@ -334,12 +330,15 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
                 'page' => $page,
                 'messages' => $msg[$facetsLang] ?? $msg['en'] ?? reset($msg),
                 'class' => 'bg-' . $i->severity ?? 'bg-error',
-                'pageSize' => $resourcesPerPage
-                    ], \JSON_UNESCAPED_SLASHES);
+                'pageSize' => $resourcesPerPage,
+                'searchIn' => $searchInRes ?? null,
+                'allPins' => $allPins,
+            ];
+            $fullresponse = json_encode($fullresponse, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
             if ($useCache) {
                 $this->cacheResults($fullresponse);
             }
-            return new Response($fullresponse);
+            return new Response($fullresponse, Response::HTTP_OK, ['x-smartsearch-cache' => 'none', 'Content-Type' => 'application/json']);
         } catch (\Throwable $e) {
             return new Response("Error in search! " . $e->getMessage(), 404, ['Content-Type' => 'application/json']);
         }
@@ -348,6 +347,40 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             return new Response("There is no resource", 404, ['Content-Type' => 'application/json']);
         }
         return new Response(json_encode($result));
+    }
+
+    private function postprocessResources(array $resources): void {
+        foreach ($resources as $i) {
+            $i->url = $this->baseUrl . $i->id;
+            $i->matchProperty ??= [];
+            $i->matchHiglight ??= array_fill(0, count($i->matchProperty), '');
+        }
+    }
+
+    private function triples2resourceObjects($triplesIterator, &$totalCount = null): array {
+        $resources = [];
+        foreach ($triplesIterator as $triple) {
+            if ($triple->property === (string) $this->schema->searchCount) {
+                $totalCount = (int) $triple->value;
+                continue;
+            }
+            $property = $this->context[$triple->property] ?? false;
+            if ($property) {
+                $id = (string) $triple->id;
+                $resources[$id] ??= (object) ['id' => $triple->id];
+                if ($triple->type === 'REL') {
+                    $tid = (string) $triple->value;
+                    $resources[$tid] ??= (object) ['id' => (int) $tid];
+                    $resources[$id]->{$property}[] = $resources[$tid];
+                } elseif (!empty($triple->lang)) {
+                    $resources[$id]->{$property}[$triple->lang] = $triple->value;
+                } else {
+                    $resources[$id]->{$property}[] = $triple->value;
+                }
+            }
+        }
+
+        return $resources;
     }
 
     /**
@@ -370,23 +403,23 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
      * get the existing cache
      * @return string
      */
-    private function getCachedData(): string {
+    private function getCachedData(): \stdClass | null {
         try {
             $query = $this->pdo->prepare("DELETE FROM gui.search_cache WHERE now() - requested > ?::interval");
             $del = $query->execute([$this->sConfig->cacheTimeout]);
 
-            $query = $this->pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response");
+            $query = $this->pdo->prepare("UPDATE gui.search_cache SET requested = now() WHERE hash = ? RETURNING response, created");
             $query->execute([$this->requestHash]);
-            $result = $query->fetchColumn();
+            $result = $query->fetchObject();
             if ($result !== false) {
                 error_log("CACHED:");
                 error_log(print_r($result, true));
                 return $result;
             }
         } catch (\Throwable $e) {
-            return "";
+            return null;
         }
-        return "";
+        return null;
     }
 
     /**
