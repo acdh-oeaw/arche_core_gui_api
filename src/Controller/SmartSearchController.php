@@ -206,7 +206,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             }
             // obtain one page of results
 
-            $page = ((int) ($postParams['page'] ?? 0));
+            $page = ((int) ($postParams['page'] ?? 1)) -1;
             $resourcesPerPage = (int) ($postParams['pageSize'] ?? 20);
             $cfg = new \acdhOeaw\arche\lib\SearchConfig();
             $cfg->metadataMode = '0_99_1_0';
