@@ -467,17 +467,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasLicensor',
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasRightsHolder',
         ];
-        /*
-          $columns = [1 => (string) $this->schema->label, 2 => (string) \zozlak\RdfConstants::RDF_TYPE];
-          $orderKey = $searchProps['orderby'];
-          if (array_key_exists($searchProps['orderby'], $columns)) {
-          $searchProps['orderby'] = $columns[$searchProps['orderby']];
-          $searchProps['orderbyColumn'] = $orderKey;
-          } else {
-          $searchProps['orderby'] = (string) \zozlak\RdfConstants::RDF_TYPE;
-          $searchProps['orderbyColumn'] = 1;
-          }
-         */
+      
         $columns = [3 => (string) $this->schema->label, 4 => (string) \zozlak\RdfConstants::RDF_TYPE];
         $orderKey = $searchProps['orderby'];
         if (array_key_exists($searchProps['orderby'], $columns)) {
@@ -506,31 +496,6 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         }
         return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
     }
-
-    public function relatedDT(string $id, array $searchProps, string $lang): Response {
-
-        $property = [
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#continues',
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isContinuedBy',
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#documents',
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy',
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isDerivedPublicationOf',
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isSourceOf',
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasSource'
-        ];
-        $columns = [1 => (string) $this->schema->label, 3 => (string) \zozlak\RdfConstants::RDF_TYPE];
-        $orderKey = $searchProps['orderby'];
-        if (array_key_exists($searchProps['orderby'], $columns)) {
-            $searchProps['orderby'] = $columns[$searchProps['orderby']];
-            $searchProps['orderbyColumn'] = $orderKey;
-        } else {
-            $searchProps['orderby'] = (string) \zozlak\RdfConstants::RDF_TYPE;
-            $searchProps['orderbyColumn'] = 1;
-        }
-
-        return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
-    }
-    
     
     public function isPartOfDT(string $id, array $searchProps, string $lang): Response {
 

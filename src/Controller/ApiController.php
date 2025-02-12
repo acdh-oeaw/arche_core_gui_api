@@ -181,17 +181,6 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->hasMembersDT($identifier, $this->setProps(), $lang);
     }
     
-    /**
-     * Related resources data table
-     * @param string $identifier
-     * @param string $lang
-     * @return type
-     */
-    public function relatedDT(string $identifier, string $lang) {
-        $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
-        return $controller->relatedDT($identifier, $this->setProps(), $lang);
-    }
-    
     public function isPartOfDT(string $identifier, string $lang) {
         $controller = new \Drupal\arche_core_gui_api\Controller\InverseDataController();
         return $controller->isPartOfDT($identifier, $this->setProps(), $lang);
