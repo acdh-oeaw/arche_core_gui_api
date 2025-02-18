@@ -85,6 +85,7 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             'text' => $result->title[0]->value . ' - ' . $result->version[0]->value,
             'userAllowedToDL' => false,
             'dir' => false,
+            'icon' =>  "jstree-file",
             'marked' => $marked,
             'encodedUri' => $this->repoDb->getBaseUrl() . $result->repoid,
             'repoid' => $result->repoid,
