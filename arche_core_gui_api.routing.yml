@@ -255,4 +255,13 @@ arche_core_api_3durl:
         identifier: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'          
+
+arche_core_api_get_resource_coordinates:    
+    path: '/api/getCoordinates/{identifier}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::getCoordinates'
+    requirements:
+        identifier: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'         
         

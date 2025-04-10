@@ -287,5 +287,55 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         }
         return new JsonResponse($fileUrl, 200, ['Content-Type' => 'application/json']);
     }
+    
+    /**
+     * Get just the coordinates for the detail view map box
+     * @param string $identifier
+     * @return JsonResponse
+     */
+    public function getCoordinates(string $identifier): JsonResponse {
+        
+        $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $identifier));
+        $lang = "en";
+        if (empty($id)) {
+            return new JsonResponse(array(t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
+        }
+
+        $result = [];
+
+        try {
+            $res = new \acdhOeaw\arche\lib\RepoResourceDb($id, $this->repoDb);
+        } catch (\Exception $ex) {
+            return [];
+        }
+
+        $schema = $this->repoDb->getSchema();
+        
+        $contextResource = [
+            (string)$schema->label => 'title',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLatitude' => 'lat',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasLongitude' => 'lon',
+            (string)'https://vocabs.acdh.oeaw.ac.at/schema#hasWKT' => 'wkt'
+        ];
+        $contextRelatives = [
+            (string)$schema->label => 'title'
+        ];
+
+        $pdoStmt = $res->getMetadataStatement(
+                'resource',
+                $schema->parent,
+                array_keys($contextResource),
+                array_keys($contextRelatives)
+        );
+        
+        $result = [];
+        $result = $this->helper->extractExpertView($pdoStmt, $id, $contextRelatives, $lang);
+       
+        if (count((array) $result) == 0) {
+            return new JsonResponse(array(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
+        }
+
+        return new JsonResponse(array($result), 200, ['Content-Type' => 'application/json']);
+    }
 
 }
