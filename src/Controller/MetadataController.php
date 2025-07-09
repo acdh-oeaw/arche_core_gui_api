@@ -200,7 +200,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
                 array_keys($context),
                 array_keys($context)
         );
-        $result = [];
+        
         $breadcrumbHelper = new \Drupal\arche_core_gui_api\Helper\ArcheBreadcrumbHelper();        
         $result = $breadcrumbHelper->extractBreadcrumbView($pdoStmt, $id, $context, $lang);
 

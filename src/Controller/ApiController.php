@@ -302,6 +302,14 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->getCoordinates($identifier);
     }
    
+    /**
+     * Check the cart items and update the cookie
+     * @return type
+     */
+    public function cartDT() {
+        $controller = new \Drupal\arche_core_gui_api\Controller\CartController();
+        return $controller->execute();
+    }
     
     
 }

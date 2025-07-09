@@ -265,3 +265,10 @@ arche_core_api_get_resource_coordinates:
         _permission: 'access content'
         _access: 'TRUE'         
         
+arche_core_api_cart:    
+    path: '/api/cartDT'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::cartDT'
+    requirements:
+        _permission: 'access content'
+        _access: 'TRUE'            
