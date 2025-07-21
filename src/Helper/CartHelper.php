@@ -93,11 +93,12 @@ class CartHelper {
             );
             $result[$id] = $this->extractParents($pdoStmt, $id, $context, "en");
         }
+        
         $output = $this->buildNestedNoChildrenKey($result);
-
+        $parents = array_keys($output);
         $meta = [];
-        $meta = $this->addMetaInfo($output, $items);
-       
+        $meta = $this->addMetaInfo($parents, $items);
+        
         return $meta;
         /**
           $input = [
@@ -125,7 +126,7 @@ class CartHelper {
     private function addMetaInfo($tree, $titles) {
 
         $out = [];
-        foreach ($tree as $id => $children) {
+        foreach ($tree as $key => $id) {
             // base node: must have a title
             $node = [
                 'title' => $titles[$id]['title'] ?? '(no title)',
@@ -133,13 +134,6 @@ class CartHelper {
                 'size' => $titles[$id]['size'] ?? '---',
                 'type' => $titles[$id]['type'] ?? '---',
             ];
-
-            // if there are children, recurse
-            if (!empty($children)) {
-                if(is_array($children)) {
-                    $node['children'] = $this->addMetaInfo($children, $titles);
-                }
-            }
             $out[$id] = $node;
         }
         return $out;

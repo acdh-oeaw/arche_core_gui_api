@@ -20,11 +20,6 @@ class CartController extends \Drupal\arche_core_gui\Controller\ArcheBaseControll
     
     public function execute() {
         $this->helper->checkCartContent();
-        //$_COOKIE['cart_items'] = [];
-        error_log("after update_:::");
-        error_log(print_r($_COOKIE['cart_items'], true));
-        error_log("after update_ ORDEREDD:::");
-        error_log(print_r($_COOKIE['cart_items_ordered'], true));
        
         $response = new Response();
         $response->setContent(json_encode(array('cart_items' => $_COOKIE['cart_items'], "cart_items_ordered" => $_COOKIE['cart_items_ordered']), \JSON_PARTIAL_OUTPUT_ON_ERROR, 1024));
