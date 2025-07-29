@@ -218,6 +218,15 @@ arche_core_api_root_table:
         _permission: 'access content'
         _access: 'TRUE' 
         
+arche_core_api_accepted_formats_table:    
+    path: '/api/accepted-formats-table/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::acceptedFormatsTable'
+    requirements:
+        lang: '^[^\?]*$'
+        _permission: 'access content'
+        _access: 'TRUE'         
+
 arche_core_api_onotlogyjs_table:    
     path: '/api/ontologyjs/{lang}'
     defaults:
@@ -225,7 +234,7 @@ arche_core_api_onotlogyjs_table:
     requirements:
         lang: '^[^\?]*$'
         _permission: 'access content'
-        _access: 'TRUE'         
+        _access: 'TRUE'       
 
 arche_core_api_next_prev_item:    
     path: '/api/nextPrevItem/{rootId}/{resourceId}/{lang}'

@@ -264,6 +264,18 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
     }
     
     /**
+     * Static text accepted formats file table
+     * @param string $lang
+     * @return type
+     */
+    public function acceptedFormatsTable(string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
+        return $controller->getAcceptedFormats($lang);
+    }
+    
+    
+    
+    /**
      * Get the next and previous child elements 
      * @param string $rootId
      * @param string $resourceId
