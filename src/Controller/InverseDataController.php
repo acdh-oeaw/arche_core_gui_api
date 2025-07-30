@@ -484,7 +484,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $property = [
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isMemberOf'
         ];
-        error_log(print_R($searchProps, true));
+        
         $columns = [1 => (string) $this->schema->label];
         $orderKey = $searchProps['orderby'];
         if (array_key_exists($searchProps['orderby'], $columns)) {

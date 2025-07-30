@@ -29,9 +29,9 @@ class AcceptedFormatsHelper extends \Drupal\arche_core_gui_api\Helper\ArcheCoreH
         $html = "<table class='table table-hover'>";
         $html .= "<thead >";
         $html .= '<tr>';
-        $html .= '<th class="text-center"><b>EXTENSION</b></th>';
-        $html .= '<th class="text-center"><b>FORMAT NAME & VERSION</b></th>';
-        $html .= '<th class="text-center"><b>PREFERENCE</b></th>';
+        $html .= '<th class="text-center"><b>'.$this->t("EXTENSION").'</b></th>';
+        $html .= '<th class="text-center"><b>'.$this->t("FORMAT NAME & VERSION").'</b></th>';
+        $html .= '<th class="text-center"><b>'.$this->t("PREFERENCE").'</b></th>';
         $html .= "</thead >";
         $html .= '</tr>';
 

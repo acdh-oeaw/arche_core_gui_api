@@ -412,8 +412,7 @@ class SmartSearchController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             $query->execute([$this->requestHash]);
             $result = $query->fetchObject();
             if ($result !== false) {
-                error_log("CACHED:");
-                error_log(print_r($result, true));
+                
                 return $result;
             }
         } catch (\Throwable $e) {
