@@ -75,6 +75,11 @@ class VersionsController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         if ((string) $result->id === (string) $this->resId) {
             $marked = true;
         }
+
+        if($result->version[0]->value === null) {
+            return new JsonResponse($this->versions, 200, ['Content-Type' => 'application/json']);
+        }
+        
         $this->versions[0] = array(
             'id' => $result->repoid,
             'uri' => $result->repoid,
