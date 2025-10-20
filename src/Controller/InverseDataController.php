@@ -11,8 +11,11 @@ use zozlak\RdfConstants as RC;
 
 class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseController {
 
+    protected $helper;
+
     public function __construct() {
         parent::__construct();
+        $this->helper = new \Drupal\arche_core_gui_api\Helper\ArcheCoreHelper();
     }
 
     private function getInverse(
@@ -93,6 +96,86 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         return [$relations, $totalCount];
     }
 
+    public function getRprBasicDT(string $id, array $searchProps, string $lang): array {
+
+        $property = [
+            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#relation',
+            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#continues',
+            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#documents',
+        ];
+
+        $id = \Drupal\Component\Utility\Xss::filter(preg_replace('/[^0-9]/', '', $id));
+
+        if (empty($id)) {
+            return [];
+        }
+
+        $result = [];
+
+        try {
+            $res = new \acdhOeaw\arche\lib\RepoResourceDb($id, $this->repoDb);
+        } catch (\Exception $ex) {
+            return [];
+        }
+
+        $schema = $this->repoDb->getSchema();
+        $contextResource = [
+            (string) $schema->label => 'title',
+            (string) $schema->parent => 'parent',
+            (string) \zozlak\RdfConstants::RDF_TYPE => 'class',
+        ];
+        $contextRelatives = [
+            (string) $schema->label => 'title',
+            (string) \zozlak\RdfConstants::RDF_TYPE => 'class',
+            (string) $schema->parent => 'parent',
+            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasIdentifier' => 'identifiers',
+        ];
+
+        $pdoStmt = $res->getMetadataStatement(
+                '0_99_1_0',
+                $schema->parent,
+                [],
+                array_keys($contextRelatives)
+        );
+        $result = [];
+        $result = $this->helper->extractExpertView($pdoStmt, $id, $contextRelatives, $lang);
+
+        if (count((array) $result) == 0) {
+            return [];
+        }
+        $return = [];
+
+        if (isset($result->{'acdh:relation'})) {
+            $return['relation'] = $this->extractNotInversePropertyData($result->{'acdh:relation'}, 'https://vocabs.acdh.oeaw.ac.at/schema#relation', $lang);
+        }
+
+        if (isset($result->{'acdh:continues'})) {
+            $return['continues'] = $this->extractNotInversePropertyData($result->{'acdh:continues'}, 'https://vocabs.acdh.oeaw.ac.at/schema#continues', $lang);
+        }
+
+        if (isset($result->{'acdh:documents'})) {
+            $return['documents'] = $this->extractNotInversePropertyData($result->{'acdh:documents'}, 'https://vocabs.acdh.oeaw.ac.at/schema#documents', $lang);
+        }
+
+        return $return;
+    }
+
+    private function extractNotInversePropertyData(array $result, string $prop, string $lang) {
+        $data = [];
+        foreach ($result as $k => $v) {
+            $values = $v[$lang];
+            $item['id'] = $k;
+            $item['acdhid'] = $k;
+            $item['property'] = $prop;
+            $titlesArr = $values->titles;
+            $item['title'] = ($values->titles[$lang]) ? $values->titles[$lang] : reset($titlesArr);
+            $item['type'] = $values->property[$lang];
+            $data[] = $item;
+        }
+
+        return $data;
+    }
+
     /**
      * Get Related Collections and Resources
      * @param string $id
@@ -107,6 +190,8 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             return new JsonResponse(array(t("Please provide an id")), 404, ['Content-Type' => 'application/json']);
         }
 
+        $basic = $this->getRprBasicDT($id, $searchProps, $lang);
+
         $result = [];
         $scfg = new \acdhOeaw\arche\lib\SearchConfig();
         $scfg->metadataMode = 'resource';
@@ -120,10 +205,10 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $scfg->orderByLang = $lang;
 
         $property = [
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#relation',
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#continues',
+            //(string) 'https://vocabs.acdh.oeaw.ac.at/schema#relation',
+            //(string) 'https://vocabs.acdh.oeaw.ac.at/schema#continues',
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isContinuedBy',
-            (string) 'https://vocabs.acdh.oeaw.ac.at/schema#documents',
+            //(string) 'https://vocabs.acdh.oeaw.ac.at/schema#documents',
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isDocumentedBy'
         ];
 
@@ -142,9 +227,31 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $searchPhrase = '';
         list($result, $totalCount) = $this->getInverse($id, $resContext, $relContext, $scfg, $property, $searchPhrase, [new \acdhOeaw\arche\lib\SearchTerm(\zozlak\RdfConstants::RDF_TYPE, [$this->schema->classes->resource, $this->schema->classes->collection])]);
 
+      
+
+        $merged = [];
+        $basicCounted = 0;
+        if(count($basic) > 0) {
+            if(isset($basic['relation'])) {
+                $basicCounted += count($basic['relation']);
+                $merged = $basic['relation'];
+            }
+            if(isset($basic['continues'])) {
+                $basicCounted += count($basic['continues']);
+                
+                $merged = array_merge($merged, $basic['continues']);
+            }
+            if(isset($basic['documents'])) {
+                $basicCounted += count($basic['documents']);
+                $merged = array_merge($merged, $basic['documents']);
+            }
+        }
+        $totalCount = $totalCount + $basicCounted;
+        
         $helper = new \Drupal\arche_core_gui_api\Helper\InverseTableHelper();
         $result = $helper->extractinverseTableView($result, $lang);
-
+        $result = array_merge($result, $merged);
+        
         if (count((array) $result) == 0) {
             return new Response(json_encode(t("There is no resource")), 404, ['Content-Type' => 'application/json']);
         }
@@ -241,8 +348,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
-    
-    
+
     /**
      * ContentScheme data DT
      * @param string $id
@@ -404,8 +510,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
 
         return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
     }
-    
-    
+
     public function getAssociatedProjectsDT(string $id, array $searchProps, string $lang): Response {
         $property = [
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasRelatedProject'
@@ -467,7 +572,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasLicensor',
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#hasRightsHolder',
         ];
-      
+
         $columns = [3 => (string) $this->schema->label, 4 => (string) \zozlak\RdfConstants::RDF_TYPE];
         $orderKey = $searchProps['orderby'];
         if (array_key_exists($searchProps['orderby'], $columns)) {
@@ -484,7 +589,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         $property = [
             (string) 'https://vocabs.acdh.oeaw.ac.at/schema#isMemberOf'
         ];
-        
+
         $columns = [1 => (string) $this->schema->label];
         $orderKey = $searchProps['orderby'];
         if (array_key_exists($searchProps['orderby'], $columns)) {
@@ -496,7 +601,7 @@ class InverseDataController extends \Drupal\arche_core_gui\Controller\ArcheBaseC
         }
         return $this->getGeneralInverseByProperty($id, $searchProps, $property, $lang);
     }
-    
+
     public function isPartOfDT(string $id, array $searchProps, string $lang): Response {
 
         $property = [
