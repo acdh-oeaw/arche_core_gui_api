@@ -355,7 +355,7 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
             usort($v, fn($x, $y) => $x[0] <=> $y[0]);
         }
         unset($v);
-      
+
         if (count($table) === 0) {
             return new \Symfony\Component\HttpFoundation\Response("There is no data", 404, ['Content-Type' => 'application/json']);
         }
@@ -371,5 +371,43 @@ class MetadataController extends \Drupal\arche_core_gui\Controller\ArcheBaseCont
         $response->setStatusCode(200);
         $response->headers->set('Content-Type', 'text/html');
         return $response;
+    }
+
+    /**
+     * Generate statistics data for the frontend
+     * @param string $lang
+     * @return JsonResponse
+     */
+    public function getFrontendStat(string $lang = "en"): JsonResponse {
+
+        $query= "
+            Select 
+                count(*) as topcol_count, sum(m2.value_n) as res_count, sum(m3.value_n) / (1::bigint << 40) as size_tb
+            From 
+                metadata m1 join metadata m2 using(id) join metadata m3 using(id)
+            Where
+                m1.property = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+                and m1.value = 'https://vocabs.acdh.oeaw.ac.at/schema#TopCollection' 
+                and m2.property = 'https://vocabs.acdh.oeaw.ac.at/schema#hasNumberOfItems' 
+                and m3.property = 'https://vocabs.acdh.oeaw.ac.at/schema#hasBinarySize'
+            ;
+        ";
+        
+        $pdoStmnt = $this->pdo->prepare($query);
+        $pdoStmnt->execute();
+        $response = $pdoStmnt->fetch();
+        $result = [];
+        
+        if(isset($response['topcol_count']) && isset($response['res_count']) && isset($response['size_tb'])) {
+            $result['topCollection'] = $response['topcol_count'];
+            $result['resources'] = $response['res_count'];
+            $result['size'] = $response['size_tb'];            
+        }
+        
+        if (count((array) $result) == 0) {
+            return new JsonResponse(array(t("There is no data")), 404, ['Content-Type' => 'application/json']);
+        }
+
+        return new JsonResponse($result, 200, ['Content-Type' => 'application/json']);
     }
 }

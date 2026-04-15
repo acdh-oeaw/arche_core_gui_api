@@ -323,5 +323,9 @@ class ApiController extends \Drupal\arche_core_gui\Controller\ArcheBaseControlle
         return $controller->execute();
     }
     
+    public function frontendStat(string $lang) {
+        $controller = new \Drupal\arche_core_gui_api\Controller\MetadataController();
+        return $controller->getFrontendStat($lang);
+    }
     
 }

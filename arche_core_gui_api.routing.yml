@@ -1,3 +1,4 @@
+## moved
 arche_api_topcollections:
   path: '/api/topcollections/{count}/{lang}'
   defaults:
@@ -7,7 +8,7 @@ arche_api_topcollections:
     lang: '^[^\?]*$'
     _permission: 'access content'
     _access: 'TRUE'
-
+## moved
 arche_core_api_expert:    
   path: '/api/expert/{id}/{lang}'
   defaults:
@@ -17,7 +18,7 @@ arche_core_api_expert:
     lang: '^[^\?]*$'
     _permission: 'access content'
     _access: 'TRUE'     
-
+## moved
 arche_core_api_breadcrumb:    
   path: '/api/breadcrumb/{id}/{lang}'
   defaults:
@@ -27,7 +28,7 @@ arche_core_api_breadcrumb:
     lang: '^[^\?]*$'
     _permission: 'access content'
     _access: 'TRUE'     
-        
+## not in use anymore        
 arche_core_api_topcollections_dt:    
   path: '/api/topcollections-dt/{lang}'
   defaults:
@@ -36,7 +37,7 @@ arche_core_api_topcollections_dt:
     lang: '^[^\?]*$'
     _permission: 'access content'
     _access: 'TRUE'         
-    
+## not in use anymore    
 arche_core_api_child:    
     path: '/api/child/{identifier}/{lang}'
     defaults:
@@ -46,7 +47,7 @@ arche_core_api_child:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'    
-        
+## moved        
 arche_core_api_child_tree:    
     path: '/api/child-tree/{identifier}/{lang}'
     defaults:
@@ -56,7 +57,7 @@ arche_core_api_child_tree:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'
-        
+## not in use anymore?!        
 arche_core_api_coordinates:    
     path: '/api/search_coordinates/{lang}'
     defaults:
@@ -65,7 +66,7 @@ arche_core_api_coordinates:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'    
-        
+## moved        
 arche_core_api_versions_list:    
     path: '/api/versions-list/{identifier}/{lang}'
     defaults:
@@ -75,7 +76,7 @@ arche_core_api_versions_list:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'       
-        
+## moved        
 arche_core_api_rpr_table:    
     path: '/api/rprDT/{identifier}/{lang}'
     defaults:
@@ -85,7 +86,7 @@ arche_core_api_rpr_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'    
-
+## moved   
 arche_core_api_publications_table:    
     path: '/api/publicationsDT/{identifier}/{lang}'
     defaults:
@@ -95,7 +96,7 @@ arche_core_api_publications_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'  
-
+## moved   
 arche_core_api_collection_concept_table:    
     path: '/api/collectionConceptDT/{identifier}/{lang}'
     defaults:
@@ -106,7 +107,7 @@ arche_core_api_collection_concept_table:
         _permission: 'access content'
         _access: 'TRUE'  
         
-        
+## moved
 arche_core_api_project_associated_table:    
     path: '/api/projectAssociatedDT/{identifier}/{lang}'
     defaults:
@@ -116,7 +117,7 @@ arche_core_api_project_associated_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'              
-        
+## moved        
 arche_core_api_place_spatial_table:    
     path: '/api/spatialDT/{identifier}/{lang}'
     defaults:
@@ -126,7 +127,7 @@ arche_core_api_place_spatial_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'       
-        
+## moved        
 arche_core_api_person_contributed_table:    
     path: '/api/contributedDT/{identifier}/{lang}'
     defaults:
@@ -136,7 +137,7 @@ arche_core_api_person_contributed_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE' 
-        
+## moved        
 arche_core_api_is_part_of_table:    
     path: '/api/isPartOfDT/{identifier}/{lang}'
     defaults:
@@ -147,6 +148,7 @@ arche_core_api_is_part_of_table:
         _permission: 'access content'
         _access: 'TRUE'         
 
+## moved
 arche_core_api_organisation_involved_table:    
     path: '/api/involvedDT/{identifier}/{lang}'
     defaults:
@@ -156,7 +158,8 @@ arche_core_api_organisation_involved_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'       
-        
+
+##moved
 arche_core_api_organisation_hasmembers_table:    
     path: '/api/hasMembersDT/{identifier}/{lang}'
     defaults:
@@ -167,7 +170,7 @@ arche_core_api_organisation_hasmembers_table:
         _permission: 'access content'
         _access: 'TRUE'       
         
-
+## not used anymore
 arche_core_api_smart_search:    
     path: '/api/smartsearch'
     defaults:
@@ -183,7 +186,7 @@ arche_core_api_vcr:
     requirements:
         _permission: 'access content'
         _access: 'TRUE'            
-
+## not used anymore
 arche_core_api_search_date_facets:    
     path: '/api/smartSearchDateFacet'
     defaults:
@@ -191,14 +194,14 @@ arche_core_api_search_date_facets:
     requirements:
         _permission: 'access content'
         _access: 'TRUE'              
-                
+## not used in the new system                
 arche_change_lng:    
     path: '/api/change_lng/{lng}'
     defaults:
         _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::archeChangeLanguage'
     requirements:
         _access: 'TRUE'  
-        
+ ## moved
 arche_smart_autocomplete:
     path: '/api/smsearch/autocomplete/{str}'
     defaults:
@@ -208,7 +211,7 @@ arche_smart_autocomplete:
         str: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'      
-
+## onprogress
 arche_core_api_root_table:    
     path: '/api/rootTable/{lang}'
     defaults:
@@ -226,7 +229,7 @@ arche_core_api_accepted_formats_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'         
-
+## onprogress
 arche_core_api_onotlogyjs_table:    
     path: '/api/ontologyjs/{lang}'
     defaults:
@@ -235,7 +238,7 @@ arche_core_api_onotlogyjs_table:
         lang: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'       
-
+## moved
 arche_core_api_next_prev_item:    
     path: '/api/nextPrevItem/{rootId}/{resourceId}/{lang}'
     defaults:
@@ -273,11 +276,22 @@ arche_core_api_get_resource_coordinates:
         identifier: '^[^\?]*$'
         _permission: 'access content'
         _access: 'TRUE'         
-        
+ ## we dont need it now       
 arche_core_api_cart:    
     path: '/api/cartDT'
     defaults:
         _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::cartDT'
     requirements:
         _permission: 'access content'
-        _access: 'TRUE'            
+        _access: 'TRUE'          
+        
+arche_core_frontend_statistics:
+    path: '/api/frontendStat/{lang}'
+    defaults:
+        _controller: '\Drupal\arche_core_gui_api\Controller\ApiController::frontendStat'
+    requirements:
+        lang: '^[^\?]*$' 
+        _permission: 'access content'
+        _access: 'TRUE'    
+  
+        
