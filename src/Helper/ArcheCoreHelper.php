@@ -285,16 +285,8 @@ class ArcheCoreHelper {
             $id = (string) $triple->id;
             $this->resources[$id] ??= (object) ['id' => (int) $id];
             
-
-            
             if ($triple->id !== $resId && isset($contextRelatives[$triple->property])) {
-               
-                
-                
                 $property = $contextRelatives[$triple->property];
-                
-
-                
                 $relvalues = \acdhOeaw\arche\lib\TripleValue::fromDbRow($triple);
 
                 if ($property === 'title') {
@@ -310,12 +302,21 @@ class ArcheCoreHelper {
                         $this->resources[$id]->relvalue = $relvalues->value;
                         $this->resources[$id]->lang = $lang;
                     }
-                }
-
-                if ($property === 'class') {
+                } elseif($property === 'firstName') {
+                    if ($relvalues->lang === $lang) {
+                        $this->resources[$id]->firstName = $relvalues->value;
+                    } elseif (!isset($this->resources[$id]->firstName)) {
+                        $this->resources[$id]->firstName = $relvalues->value;
+                    }
+                } elseif($property === 'lastName') {
+                    if ($relvalues->lang === $lang) {
+                        $this->resources[$id]->lastName = $relvalues->value;
+                    } elseif (!isset($this->resources[$id]->lastName)) {
+                        $this->resources[$id]->lastName = $relvalues->value;
+                    }
+                } elseif ($property === 'class') {
                     $this->resources[$id]->property[$lang] = $relvalues->value;
-                }
-                if ($property === 'identifiers') {
+                } elseif ($property === 'identifiers') {
                     $this->resources[$id]->{'identifiers'}[] = $triple->value;
                 }
 
@@ -349,6 +350,11 @@ class ArcheCoreHelper {
             }
         }
 
+        
+        foreach ($this->resources as $i) {
+            $i->sortValue = ($i->lastName ?? '!') . '|' . ($i->firstName ?? '!') . '|' . ($i->value ?? '');
+        }
+        
         if (count($this->resources) < 1) {
             return new \stdClass();
         }
